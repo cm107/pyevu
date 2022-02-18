@@ -70,6 +70,9 @@ class BBox2D:
     def ContainsY(self, val: float) -> bool:
         return self.yInterval.Contains(val)
     
+    def Contains(self, vertex: Vector2) -> bool:
+        return self.ContainsX(vertex.x) and self.ContainsY(vertex.y)
+
     @classmethod
     def Union(cls, bbox0: BBox2D, bbox1: BBox2D) -> BBox2D:
         workingValues = BBox2D.WorkingValues()
