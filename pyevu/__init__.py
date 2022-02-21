@@ -1,5 +1,7 @@
 __version__ = '0.1'
 
-from .vector2 import Vector2
 from .interval import Interval
+from .vector2 import Vector2
 from .bbox2d import BBox2D
+from .vector3 import Vector3
+from .bbox3d import BBox3D
