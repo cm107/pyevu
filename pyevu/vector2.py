@@ -106,7 +106,11 @@ class Vector2:
     
     @property
     def normalized(self) -> Vector2:
-        return self / self.magnitude
+        if self.magnitude > 0:
+            return self / self.magnitude
+        else:
+            return Vector2.zero
+
 
     def Distance(cls, a: Vector2, b: Vector2) -> float:
         return (b-a).magnitude
