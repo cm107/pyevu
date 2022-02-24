@@ -1,6 +1,6 @@
 from __future__ import annotations
 import math
-from typing import Union
+from typing import Union, List
 from .mathf import rad2deg
 
 class Vector3:
@@ -120,7 +120,7 @@ class Vector3:
         return (self.x**2 + self.y**2 + self.z**2)**0.5
     
     @property
-    def normalized(self) -> float:
+    def normalized(self) -> Vector3:
         return self / self.magnitude
 
     def Distance(cls, a: Vector3, b: Vector3) -> float:
@@ -132,3 +132,10 @@ class Vector3:
             return math.acos(Vector3.Dot(a,b) / (a.magnitude * b.magnitude))
         else:
             return math.acos(Vector3.Dot(a,b) / (a.magnitude * b.magnitude)) * rad2deg
+
+    def ToList(self) -> List[float]:
+        return [self.x, self.y, self.z]
+    
+    @classmethod
+    def FromList(self, vals: List[float]) -> Vector3:
+        return Vector3(vals[0], vals[1], vals[2])
