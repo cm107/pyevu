@@ -142,3 +142,19 @@ class Vector3:
     @classmethod
     def FromList(self, vals: List[float]) -> Vector3:
         return Vector3(vals[0], vals[1], vals[2])
+    
+    def transpose(self, order: str) -> Vector3:
+        # Example: vec3.transpose('zyx')
+        assert len(order) == 3, f"order must be represented with 3 characters"
+        expectedLetters = list('xyz')
+        for letter in order:
+            if letter not in expectedLetters:
+                raise ValueError(f"Invalid character: {letter}. Expected one of the following: {expectedLetters}")
+        for letter in expectedLetters:
+            if letter not in list(order):
+                raise ValueError(f"Character missing from order: {letter}. Received: {order}")
+        currentValues = {'x': self.x, 'y': self.y, 'z': self.z}
+        newValues = {}
+        for i in range(len(expectedLetters)):
+            newValues[expectedLetters[i]] = currentValues[list(order)[i]]
+        return Vector3(x=newValues['x'], y=newValues['y'], z=newValues['z'])

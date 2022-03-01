@@ -128,3 +128,8 @@ class Vector2:
     @classmethod
     def FromList(self, vals: List[float]) -> Vector2:
         return Vector2(vals[0], vals[1])
+    
+    def transpose(self) -> Vector2:
+        # Note: Since there are only two values, there is only one possible new order.
+        # Therefore, it is not necessary to specify the order.
+        return Vector2(x=self.y, y=self.x)
