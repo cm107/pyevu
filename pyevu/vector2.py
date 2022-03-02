@@ -105,6 +105,10 @@ class Vector2:
         return (self.x**2 + self.y**2)**0.5
     
     @property
+    def sqrMagnitude(self) -> float:
+        return self.x**2 + self.y**2
+    
+    @property
     def normalized(self) -> Vector2:
         if self.magnitude > 0:
             return self / self.magnitude
@@ -116,6 +120,10 @@ class Vector2:
     def Distance(cls, a: Vector2, b: Vector2) -> float:
         return (b-a).magnitude
     
+    @classmethod
+    def SqrDistance(cls, a: Vector2, b: Vector2) -> float:
+        return (b-a).sqrMagnitude
+
     @classmethod
     def Angle(cls, a: Vector2, b: Vector2, deg: bool=False) -> float:
         if not deg:

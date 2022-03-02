@@ -120,6 +120,10 @@ class Vector3:
         return (self.x**2 + self.y**2 + self.z**2)**0.5
     
     @property
+    def sqrMagnitude(self) -> float:
+        return self.x**2 + self.y**2 + self.z**2
+
+    @property
     def normalized(self) -> Vector3:
         if self.magnitude > 0:
             return self / self.magnitude
@@ -130,6 +134,10 @@ class Vector3:
     def Distance(cls, a: Vector3, b: Vector3) -> float:
         return (b-a).magnitude
     
+    @classmethod
+    def SqrDistance(cls, a: Vector3, b: Vector3) -> float:
+        return (b-a).sqrMagnitude
+
     @classmethod
     def Angle(cls, a: Vector3, b: Vector3, deg: bool=False) -> float:
         aMag = a.magnitude
