@@ -126,15 +126,20 @@ class Vector3:
         else:
             return Vector3.zero
 
+    @classmethod
     def Distance(cls, a: Vector3, b: Vector3) -> float:
         return (b-a).magnitude
     
     @classmethod
     def Angle(cls, a: Vector3, b: Vector3, deg: bool=False) -> float:
+        aMag = a.magnitude
+        bMag = b.magnitude
+        if aMag == 0 or bMag == 0:
+            return None
         if not deg:
-            return math.acos(Vector3.Dot(a,b) / (a.magnitude * b.magnitude))
+            return math.acos(Vector3.Dot(a,b) / (aMag * bMag))
         else:
-            return math.acos(Vector3.Dot(a,b) / (a.magnitude * b.magnitude)) * rad2deg
+            return math.acos(Vector3.Dot(a,b) / (aMag * bMag)) * rad2deg
 
     def ToList(self) -> List[float]:
         return [self.x, self.y, self.z]

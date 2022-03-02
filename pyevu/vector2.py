@@ -112,6 +112,7 @@ class Vector2:
             return Vector2.zero
 
 
+    @classmethod
     def Distance(cls, a: Vector2, b: Vector2) -> float:
         return (b-a).magnitude
     
