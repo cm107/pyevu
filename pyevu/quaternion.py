@@ -78,7 +78,7 @@ class Quaternion:
         return self.GetEulerAngles(degrees=True)
     
     @classmethod
-    def Euler(cls, euler: Vector3, degrees: bool=True) -> Quaternion:
+    def EulerVector(cls, euler: Vector3, degrees: bool=True) -> Quaternion:
         # Returns a rotation that rotates z degrees around the z axis, x degrees around the x axis, and y degrees around the y axis.
         xRot = Quaternion.AngleAxis(euler.x, axis=Vector3.right, degrees=degrees).ToPyquaternion().rotation_matrix
         yRot = Quaternion.AngleAxis(euler.y, axis=Vector3.up, degrees=degrees).ToPyquaternion().rotation_matrix
@@ -86,3 +86,8 @@ class Quaternion:
         rotationMatrix = yRot @ xRot @ zRot
         quat = Quaternion.FromPyquaternion(pyQuaternion._from_matrix(rotationMatrix))
         return quat
+
+    @classmethod
+    def Euler(cls, x: float, y: float, z: float, degrees: bool=True) -> Quaternion:
+        # Returns a rotation that rotates z degrees around the z axis, x degrees around the x axis, and y degrees around the y axis.
+        return Quaternion.EulerVector(Vector3(x,y,z), degrees=degrees)
