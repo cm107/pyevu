@@ -5,3 +5,5 @@ from .vector2 import Vector2
 from .bbox2d import BBox2D
 from .vector3 import Vector3
 from .bbox3d import BBox3D
+from .quaternion import Quaternion
+from .transform import Transform

@@ -131,6 +131,13 @@ class Vector2:
         else:
             return math.acos(Vector2.Dot(a,b) / (a.magnitude * b.magnitude)) * rad2deg
 
+    @classmethod
+    def SignedAngle(cls, a: Vector2, b: Vector2, deg: bool=False) -> float:
+        # Returns the signed angle in degrees between a and b.
+        angle = Vector2.Angle(a, b, deg=deg)
+        angle = math.copysign(angle, Vector2.Cross(a, b))
+        return angle
+
     def ToList(self) -> List[float]:
         return [self.x, self.y]
     
