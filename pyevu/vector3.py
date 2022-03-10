@@ -1,6 +1,7 @@
 from __future__ import annotations
-import math
 from typing import Union, List
+import math
+import numpy as np
 from .mathf import rad2deg
 
 class Vector3:
@@ -161,8 +162,17 @@ class Vector3:
     
     @classmethod
     def FromList(self, vals: List[float]) -> Vector3:
+        if len(vals) != 3:
+            raise Exception(f"Expected a list of length 3. Encountered length: {len(vals)}")
         return Vector3(vals[0], vals[1], vals[2])
     
+    def ToNumpy(self) -> np.ndarray:
+        return np.array(self.ToList())
+
+    @classmethod
+    def FromNumpy(cls, arr: np.ndarray) -> Vector3:
+        return Vector3.FromList(arr.reshape(-1).tolist())
+
     def transpose(self, order: str) -> Vector3:
         # Example: vec3.transpose('zyx')
         assert len(order) == 3, f"order must be represented with 3 characters"

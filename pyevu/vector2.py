@@ -1,6 +1,7 @@
 from __future__ import annotations
-import math
 from typing import Union, List
+import math
+import numpy as np
 from .mathf import rad2deg
 
 class Vector2:
@@ -143,8 +144,17 @@ class Vector2:
     
     @classmethod
     def FromList(self, vals: List[float]) -> Vector2:
+        if len(vals) != 2:
+            raise Exception(f"Expected a list of length 2. Encountered length: {len(vals)}")
         return Vector2(vals[0], vals[1])
     
+    def ToNumpy(self) -> np.ndarray:
+        return np.array(self.ToList())
+
+    @classmethod
+    def FromNumpy(cls, arr: np.ndarray) -> Vector2:
+        return Vector2.FromList(arr.reshape(-1).tolist())
+
     def transpose(self) -> Vector2:
         # Note: Since there are only two values, there is only one possible new order.
         # Therefore, it is not necessary to specify the order.
