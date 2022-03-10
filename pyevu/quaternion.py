@@ -78,16 +78,41 @@ class Quaternion:
         return self.GetEulerAngles(degrees=True)
     
     @classmethod
-    def EulerVector(cls, euler: Vector3, degrees: bool=True) -> Quaternion:
-        # Returns a rotation that rotates z degrees around the z axis, x degrees around the x axis, and y degrees around the y axis.
-        xRot = Quaternion.AngleAxis(euler.x, axis=Vector3.right, degrees=degrees).ToPyquaternion().rotation_matrix
-        yRot = Quaternion.AngleAxis(euler.y, axis=Vector3.up, degrees=degrees).ToPyquaternion().rotation_matrix
-        zRot = Quaternion.AngleAxis(euler.z, axis=Vector3.forward, degrees=degrees).ToPyquaternion().rotation_matrix
-        rotationMatrix = yRot @ xRot @ zRot
+    def EulerVector(cls, euler: Vector3, degrees: bool=True, order: str='zxy') -> Quaternion:
+        # By default, returns a rotation that rotates z degrees around the z axis, x degrees around the x axis, and y degrees around the y axis.
+        # This order can be changed with the order parameter.
+
+        # Define individual rotation matrices
+        xRot = Quaternion.AngleAxis(euler.x, axis=Vector3(1,0,0), degrees=degrees).ToPyquaternion().rotation_matrix
+        yRot = Quaternion.AngleAxis(euler.y, axis=Vector3(0,1,0), degrees=degrees).ToPyquaternion().rotation_matrix
+        zRot = Quaternion.AngleAxis(euler.z, axis=Vector3(0,0,1), degrees=degrees).ToPyquaternion().rotation_matrix
+        
+        # work out order
+        assert len(order) == 3, f"order must be represented with 3 characters"
+        expectedLetters = list('xyz')
+        for letter in order:
+            if letter not in expectedLetters:
+                raise ValueError(f"Invalid character: {letter}. Expected one of the following: {expectedLetters}")
+        for letter in expectedLetters:
+            if letter not in list(order):
+                raise ValueError(f"Character missing from order: {letter}. Received: {order}")
+        currentValues = {'x': xRot, 'y': yRot, 'z': zRot}
+        newValues = {}
+        for i in range(len(expectedLetters)):
+            newValues[expectedLetters[i]] = currentValues[list(order)[i]]
+        
+        # rotationMatrix = yRot @ xRot @ zRot # for unity
+        rotationMatrix = currentValues['z'] @ currentValues['y'] @ currentValues['x']
         quat = Quaternion.FromPyquaternion(pyQuaternion._from_matrix(rotationMatrix))
         return quat
 
     @classmethod
-    def Euler(cls, x: float, y: float, z: float, degrees: bool=True) -> Quaternion:
+    def Euler(cls, x: float, y: float, z: float, degrees: bool=True, order: str='zxy') -> Quaternion:
         # Returns a rotation that rotates z degrees around the z axis, x degrees around the x axis, and y degrees around the y axis.
-        return Quaternion.EulerVector(Vector3(x,y,z), degrees=degrees)
+        # This order can be changed with the order parameter.
+        return Quaternion.EulerVector(Vector3(x,y,z), degrees=degrees, order=order)
+    
+    @property
+    def inverse(self) -> Quaternion:
+        return Quaternion.FromPyquaternion(self.ToPyquaternion().inverse)
+        
