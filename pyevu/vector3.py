@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Union, List
+from typing import Union, List, Tuple
 import math
 import numpy as np
 from .mathf import rad2deg
+from .random import Random
 
 class Vector3:
     def __init__(self, x: float, y: float, z: float):
@@ -62,6 +63,16 @@ class Vector3:
 
     def Copy(self) -> Vector3:
         return Vector3.FromList(self.ToList())
+
+    @classmethod
+    def RandomRange(
+        cls, x: Tuple[float, float], y: Tuple[float, float], z: Tuple[float, float]
+    ) -> Vector3:
+        return Vector3(
+            x=Random.FloatRange(*x),
+            y=Random.FloatRange(*y),
+            z=Random.FloatRange(*z)
+        )
 
     @classmethod
     @property

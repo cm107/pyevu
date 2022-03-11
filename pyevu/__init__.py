@@ -7,3 +7,6 @@ from .vector3 import Vector3
 from .bbox3d import BBox3D
 from .quaternion import Quaternion
 from .transform import Transform
+from .gameObject import GameObject
+from .timestamp import Timestamp
+from .random import Random

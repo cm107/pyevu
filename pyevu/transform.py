@@ -1,14 +1,20 @@
 from __future__ import annotations
-from typing import cast, List
+from multiprocessing import parent_process
+from typing import cast, List, TYPE_CHECKING
 import numpy as np
 from .vector3 import Vector3
 from .quaternion import Quaternion
 
+if TYPE_CHECKING:
+    # Refer to https://www.stefaanlippens.net/circular-imports-type-hints-python.html
+    from .gameObject import GameObject
+
 class Transform:
-    def __init__(self, position: Vector3, rotation: Quaternion, parent: Transform=None):
-        self.position = position # world position
-        self.rotation = rotation # world rotation
-        self.parent = parent
+    def __init__(self, position: Vector3, rotation: Quaternion, parent: Transform=None, gameObject: GameObject=None):
+        self._position = position # world position
+        self._rotation = rotation # world rotation
+        self._parent = parent
+        self.gameObject = gameObject
 
     def __str__(self) -> str:
         return f"Transform({self.position},{self.rotation})"
@@ -56,6 +62,123 @@ class Transform:
 
     def Copy(self) -> Transform:
         return Transform.FromDict(self.ToDict())
+
+    @property
+    def parent(self) -> Transform:
+        return self._parent
+    
+    @parent.setter
+    def parent(self, transform: Transform):
+        # Note: If the gameObject reference on all transforms are None, this just becomes
+        #       self._parent = transform
+        #       You shouldn't need to assign a reference to gameObject if you don't care about the GameObject hierarchy.
+        #       The implications of not having a GameObject hierarchy, though, is that you can't move the children under a transform in tandem.
+        #       With the parent member, we can know the parent of this transform, but we have no knowledge of any children without the gameObject reference.
+        #       Why implement the Transform class like this? Because the implementation of the local transform only depends
+        #       on this transform's transformation matrix and the transformation matrix of its parent.
+        #       We do not need the transformation matrix of any of this transform's children for simple transformation matrix logic, so that is why they are not in here.
+        #       Even if we did define the children logic in here as well, it would just make the code look messier and the class itself less flexible.
+        #
+
+        if self._parent is not None and self._parent.gameObject is not None:
+            # Unregister this GameObject from current parent's children.
+            self._parent.gameObject.children.remove(self.gameObject)
+        
+        self._parent = transform
+
+        if self.gameObject is not None:
+            # Register this GameObject to new parent's children.
+            self._parent.gameObject.children.append(self.gameObject)
+            # print(f"Added {self.gameObject.name} to children of {self._parent.gameObject.name}")
+
+    @property
+    def position(self) -> Vector3:
+        return self._position
+    
+    @position.setter
+    def position(self, position: Vector3):
+        if self.gameObject is not None: # Note: Children aren't updated if there is no GameObject hierarchy.
+            diffVector = position - self.position
+            diffTransform = Transform(diffVector, Quaternion.identity)
+            self.gameObject._ApplyDiffToChildren(diffTransform)
+
+        self._position = position
+
+    @property
+    def rotation(self) -> Quaternion:
+        return self._rotation
+
+    @rotation.setter
+    def rotation(self, rotation: Quaternion):
+        if self.gameObject is not None: # Note: Children aren't updated if there is no GameObject hierarchy.
+            # We want:
+            #   diff * q1 = q2
+            #   => diff * q1 * q1.inverse = q2 * q1.inverse
+            #   => diff = q2 * q1.inverse
+            diffRot = rotation * self.rotation.inverse
+            diffTransform = Transform(Vector3.zero, diffRot)
+            self.gameObject._ApplyDiffToChildren(diffTransform)
+        
+        self._rotation = rotation
+
+    @property
+    def path(self) -> str:
+        if self.gameObject is None:
+            return ""
+        else:
+            if self.parent is None:
+                return self.gameObject.name
+            else:
+                return f"{self.parent.path}/{self.gameObject.name}"
+    
+    def Find(self, path: str) -> Transform:
+        if self.gameObject is None:
+            return None
+        else:
+            if path == self.path:
+                return self
+            for child in self.gameObject.children:
+                if child.transform.path == path:
+                    return child.transform
+                else:
+                    match = child.transform.Find(path)
+                    if match is not None:
+                        return match
+            return None
+
+    def FindChild(self, name: str) -> Transform:
+        if self.gameObject is None:
+            return None
+        else:
+            for child in self.gameObject.children:
+                if child.name == name:
+                    return child.transform
+            return None
+    
+    @property
+    def hierarchyPaths(self) -> List[str]:
+        # def RemoveStrFromBeginning(val: str, startingWith: str):
+        #     if not val.startswith(startingWith):
+        #         return val
+        #     else:
+        #         valChars = list(val)
+        #         del valChars[0:len(startingWith)]
+        #         return ''.join(valChars)
+
+        paths: List[str] = [self.path]
+        
+        if self.gameObject is None:
+            return paths
+        else:
+            for child in self.gameObject.children:
+                paths.extend(child.transform.hierarchyPaths)
+            return paths
+
+    def PrintHierarchy(self):
+        print("Hierarchy:")
+        for path in self.hierarchyPaths:
+            t = self.Find(path)
+            print(f"\t{path}: {t}")
 
     @classmethod
     @property
