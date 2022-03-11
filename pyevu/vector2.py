@@ -59,6 +59,9 @@ class Vector2:
         else:
             raise TypeError(f"Can't divide {type(self).__name__} from {type(other).__name__}")
 
+    def Copy(self) -> Vector2:
+        return Vector2.FromList(self.ToList())
+
     @classmethod
     @property
     def one(cls) -> Vector2:
@@ -159,3 +162,11 @@ class Vector2:
         # Note: Since there are only two values, there is only one possible new order.
         # Therefore, it is not necessary to specify the order.
         return Vector2(x=self.y, y=self.x)
+
+    @property
+    def mat2(self) -> np.ndarray:
+        return self.ToNumpy().reshape(1,-1)
+    
+    @property
+    def mat3(self) -> np.ndarray:
+        return np.pad(self.mat2, [(0, 0), (0, 1)], mode='constant', constant_values=1)

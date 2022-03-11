@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, List
+from xml.dom import IndexSizeErr
 from pyquaternion import Quaternion as pyQuaternion
 from .vector3 import Vector3
 import math
@@ -16,27 +17,28 @@ class Quaternion:
         # This could be complicated since unity uses a left-handed coordinate system.
     
     def __str__(self) -> str:
-        return self.ToPyquaternion().__str__() # yoink
+        # return self.ToPyquaternion().__str__() # yoink
+        return f"Quaternion({self.w},{self.x},{self.y},{self.z})"
     
     def __repr__(self) -> str:
         return self.__str__()
 
     def __mul__(self, other: Union[Vector3, Quaternion]) -> Union[Vector3, Quaternion]:
         if type(other) is Vector3:
-            rotation_matrix = self.ToPyquaternion().rotation_matrix
+            rotation_matrix = self.rotation_matrix
             other_np = np.array(other.ToList())
             return Vector3.FromList((rotation_matrix @ other_np).tolist())
         elif type(other) is Quaternion:
-            rot = self.ToPyquaternion().rotation_matrix @ other.ToPyquaternion().rotation_matrix
-            quat = Quaternion.FromPyquaternion(pyQuaternion._from_matrix(rot))
+            rot = self.rotation_matrix @ other.rotation_matrix
+            quat = Quaternion.FromRotationMatrix(rot)
             return quat
         else:
             raise TypeError(f"Can't multiply {type(self).__name__} with {type(other).__name__}")
     
     def __rmul__(self, other: Union[Vector3, Quaternion]) -> Union[Vector3, Quaternion]:
         if type(other) is Quaternion:
-            rot = other.ToPyquaternion().rotation_matrix @ self.ToPyquaternion().rotation_matrix
-            quat = Quaternion.FromPyquaternion(pyQuaternion._from_matrix(rot))
+            rot = other.rotation_matrix @ self.rotation_matrix
+            quat = Quaternion.FromRotationMatrix(rot)
             return quat
         else:
             return self.__mul__(other)
@@ -47,6 +49,16 @@ class Quaternion:
     @classmethod
     def FromPyquaternion(cls, pyquat: pyQuaternion) -> Quaternion:
         return Quaternion(w=pyquat.w, x=pyquat.x, y=pyquat.y, z=pyquat.z)
+
+    def ToList(self) -> List[float]:
+        return [self.w, self.x, self.y, self.z]
+    
+    @classmethod
+    def FromList(cls, vals: List[float]) -> Quaternion:
+        return Quaternion(w=vals[0], x=vals[1], y=vals[2], z=vals[3])
+    
+    def Copy(self) -> Quaternion:
+        return Quaternion.FromList(self.ToList())
 
     @classmethod
     def AngleAxis(cls, angle: float, axis: Vector3, degrees: float=True) -> Quaternion:
@@ -83,9 +95,9 @@ class Quaternion:
         # This order can be changed with the order parameter.
 
         # Define individual rotation matrices
-        xRot = Quaternion.AngleAxis(euler.x, axis=Vector3(1,0,0), degrees=degrees).ToPyquaternion().rotation_matrix
-        yRot = Quaternion.AngleAxis(euler.y, axis=Vector3(0,1,0), degrees=degrees).ToPyquaternion().rotation_matrix
-        zRot = Quaternion.AngleAxis(euler.z, axis=Vector3(0,0,1), degrees=degrees).ToPyquaternion().rotation_matrix
+        xRot = Quaternion.AngleAxis(euler.x, axis=Vector3(1,0,0), degrees=degrees).rotation_matrix
+        yRot = Quaternion.AngleAxis(euler.y, axis=Vector3(0,1,0), degrees=degrees).rotation_matrix
+        zRot = Quaternion.AngleAxis(euler.z, axis=Vector3(0,0,1), degrees=degrees).rotation_matrix
         
         # work out order
         assert len(order) == 3, f"order must be represented with 3 characters"
@@ -115,4 +127,19 @@ class Quaternion:
     @property
     def inverse(self) -> Quaternion:
         return Quaternion.FromPyquaternion(self.ToPyquaternion().inverse)
-        
+    
+    @property
+    def rotation_matrix(self) -> np.ndarray:
+        return self.ToPyquaternion().rotation_matrix
+    
+    @classmethod
+    def FromRotationMatrix(cls, rotation_matrix: np.ndarray) -> Quaternion:
+        expectedShape = (3, 3)
+        if rotation_matrix.shape != expectedShape:
+            raise ValueError(f"Expected rotation_matrix to be of shape {expectedShape}. Encountered {rotation_matrix.shape}")
+        return cls.FromPyquaternion(pyQuaternion._from_matrix(rotation_matrix))
+    
+    @classmethod
+    @property
+    def identity(self) -> Quaternion:
+        return Quaternion(w=1,x=0,y=0,z=0)

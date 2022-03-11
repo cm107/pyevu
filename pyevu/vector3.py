@@ -60,6 +60,9 @@ class Vector3:
         else:
             raise TypeError(f"Can't divide {type(self).__name__} from {type(other).__name__}")
 
+    def Copy(self) -> Vector3:
+        return Vector3.FromList(self.ToList())
+
     @classmethod
     @property
     def one(cls) -> Vector3:
@@ -188,3 +191,11 @@ class Vector3:
         for i in range(len(expectedLetters)):
             newValues[expectedLetters[i]] = currentValues[list(order)[i]]
         return Vector3(x=newValues['x'], y=newValues['y'], z=newValues['z'])
+    
+    @property
+    def mat3(self) -> np.ndarray:
+        return self.ToNumpy().reshape(1,-1)
+    
+    @property
+    def mat4(self) -> np.ndarray:
+        return np.pad(self.mat3, [(0, 0), (0, 1)], mode='constant', constant_values=1)
