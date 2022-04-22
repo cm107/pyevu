@@ -117,3 +117,9 @@ class BBox2D:
     @property
     def area(self) -> float:
         return self.xInterval.length * self.yInterval.length
+
+    def Clamp(self, vec: Vector2) -> Vector2:
+        return Vector3(
+            x=self.xInterval.Clamp(vec.x),
+            y=self.yInterval.Clamp(vec.y)
+        )

@@ -78,3 +78,11 @@ class Interval:
     def Distance(cls, a: Interval, b: Interval) -> float:
         gap = Interval.Gap(a, b)
         return gap.length if gap is not None else 0
+    
+    def Clamp(self, val: float) -> float:
+        if val < self.min:
+            return self.min
+        elif val > self.max:
+            return self.max
+        else:
+            return val

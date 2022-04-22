@@ -135,3 +135,10 @@ class BBox3D:
     @property
     def volume(self) -> float:
         return self.xInterval.length * self.yInterval.length * self.zInterval.length
+
+    def Clamp(self, vec: Vector3) -> Vector3:
+        return Vector3(
+            x=self.xInterval.Clamp(vec.x),
+            y=self.yInterval.Clamp(vec.y),
+            z=self.zInterval.Clamp(vec.z)
+        )
