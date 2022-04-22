@@ -24,6 +24,18 @@ class BBox2D:
         self.v0 += diffVector
         self.v1 += diffVector
 
+    @property
+    def shape(self) -> Vector2:
+        return self.v1 - self.v0
+    
+    @shape.setter
+    def shape(self, value: Vector2):
+        shape = self.shape
+        shape_diff = value - shape
+        half_shape_diff = 0.5 * shape_diff
+        self.v0 -= half_shape_diff
+        self.v1 += half_shape_diff
+
     class WorkingValues:
         def __init__(self):
             self.xmin = None
