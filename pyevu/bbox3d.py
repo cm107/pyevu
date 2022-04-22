@@ -14,6 +14,9 @@ class BBox3D:
     def __repr__(self) -> str:
         return self.__str__()
     
+    def Copy(self) -> BBox3D:
+        return BBox3D(self.v0, self.v1)
+
     @property
     def center(self) -> Vector3:
         return 0.5 * (self.v0 + self.v1)
