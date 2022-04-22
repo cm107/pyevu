@@ -8,7 +8,7 @@ from .quaternion import Quaternion
 from .timestamp import Timestamp
 
 class GameObject:
-    def __init__(self, transform: Transform=None, name: str="GameObject", children: List[GameObject]=None, timestamp: Timestamp=None):
+    def __init__(self, name: str="GameObject", transform: Transform=None, children: List[GameObject]=None, timestamp: Timestamp=None):
         self.transform = transform if transform is not None else Transform(position=Vector3.zero, rotation=Quaternion.identity)
         self.transform.gameObject = self
         self.name = name

@@ -17,6 +17,17 @@ class Vector3:
     def __repr__(self) -> str:
         return self.__str__()
 
+    def __key(self) -> tuple:
+        return tuple([self.__class__] + list(self.__dict__.values()))
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__key() == other.__key()
+        return NotImplemented
+
     def __neg__(self) -> Vector3:
         return Vector3(x=-self.x, y=-self.y, z=-self.z)
 

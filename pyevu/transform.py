@@ -17,7 +17,7 @@ class Transform:
         self.gameObject = gameObject
 
     def __str__(self) -> str:
-        return f"Transform({self.position},{self.rotation})"
+        return f"Transform({self.position},{self.rotation.eulerAngles})"
 
     def __repr__(self) -> str:
         return self.__str__()
