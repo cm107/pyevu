@@ -18,6 +18,12 @@ class BBox2D:
     def center(self) -> Vector2:
         return 0.5 * (self.v0 + self.v1)
 
+    @center.setter
+    def center(self, value: Vector2):
+        diffVector = value - self.center
+        self.v0 += diffVector
+        self.v1 += diffVector
+
     class WorkingValues:
         def __init__(self):
             self.xmin = None
