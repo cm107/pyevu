@@ -134,7 +134,7 @@ class Vector3:
         return Vector3.Dot(a, a)
 
     @classmethod
-    def Cross(cls, a: Vector3, b: Vector3) -> float:
+    def Cross(cls, a: Vector3, b: Vector3) -> Vector3:
         return Vector3(
             x=a.y * b.z - a.z * b.y,
             y=-a.x * b.z + a.z * b.x,
