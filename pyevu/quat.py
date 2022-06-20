@@ -79,7 +79,7 @@ class Quat:
         elif type(other) in [float, int]:
             return Quat(self.w * other, self.x * other, self.y * other, self.z * other)
         else:
-            raise TypeError
+            raise TypeError(f"Cannot multiple {type(self).__name__} with {type(other).__name__}")
     
     def __rmul__(self, other) -> Quat:
         if type(other) is Quat:
@@ -87,7 +87,7 @@ class Quat:
         elif type(other) in [float, int]:
             return self.__mul__(other)
         else:
-            raise TypeError
+            raise TypeError(f"Cannot multiple {type(other).__name__} with {type(self).__name__}")
     
     def __truediv__(self, other) -> Quat:
         if type(other) is Quat:
@@ -121,18 +121,18 @@ class Quat:
     def from_vector_part(v: Vector3) -> Quat:
         return Quat(0, v.x, v.y, v.z)
 
-    @staticmethod
     @classmethod
+    @property
     def one(cls) -> Quat:
         return Quat(1, 1, 1, 1)
     
-    @staticmethod
     @classmethod
+    @property
     def zero(cls) -> Quat:
         return Quat(0, 0, 0, 0)
     
-    @staticmethod
     @classmethod
+    @property
     def identity(cls) -> Quat:
         return Quat.one
 

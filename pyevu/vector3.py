@@ -221,3 +221,12 @@ class Vector3:
     @property
     def mat4(self) -> np.ndarray:
         return np.pad(self.mat3, [(0, 0), (0, 1)], mode='constant', constant_values=1)
+    
+    @property
+    def translation_matrix(self) -> np.ndarray:
+        return np.array([
+            [1, 0, 0, self.x],
+            [0, 1, 0, self.y],
+            [0, 0, 1, self.z],
+            [0, 0, 0, 1]
+        ])
