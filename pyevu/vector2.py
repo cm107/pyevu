@@ -174,6 +174,20 @@ class Vector2:
         # Therefore, it is not necessary to specify the order.
         return Vector2(x=self.y, y=self.x)
 
+    def rotate(self, angle: float, deg: bool=True) -> Vector2:
+        # https://answers.unity.com/questions/661383/whats-the-most-efficient-way-to-rotate-a-vector2-o.html
+        # Note: Rotates counter-clockwise.
+        if deg:
+            angle = math.radians(angle)
+        sin = math.sin(angle)
+        cos = math.cos(angle)
+        tx = self.x
+        ty = self.y
+        return Vector2(
+            x=(cos * tx) - (sin * ty),
+            y=(sin * tx) + (cos * ty)
+        )
+
     @property
     def mat2(self) -> np.ndarray:
         return self.ToNumpy().reshape(1,-1)
