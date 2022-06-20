@@ -302,7 +302,15 @@ class Quat:
     #region rotation matrix related
     @property
     def rotation_matrix(self) -> np.ndarray:
+        # TODO: Use scipy's Rotation class to do this instead.
+        """
+        >>> x, y, z = 30, 50, 16 # Unity rotation order
+        >>> R.from_euler('zxy', [z,x,y], degrees=True).as_matrix() # python
+        """
+
         # https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+        # TODO: This algorithm doesn't seem to work?
+        #       Deprecate this method and replace it with scipy approach.
         m00 = 1 - 2 * self.y**2 - 2 * self.z**2
         m01 = 2 * self.x * self.y - 2 * self.z * self.w
         m02 = 2 * self.x * self.z + 2 * self.y * self.w
