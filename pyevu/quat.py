@@ -104,6 +104,22 @@ class Quat:
             raise TypeError
     #endregion
 
+    #region array conversion
+    def ToList(self) -> list[float]:
+        return [self.w, self.x, self.y, self.z]
+    
+    @staticmethod
+    def FromList(vals: list) -> Quat:
+        return Quat(*vals)
+
+    def ToNumpy(self) -> np.ndarray:
+        return np.array(self.ToList())
+    
+    @staticmethod
+    def FromNumpy(vals: np.ndarray) -> Quat:
+        return Quat.FromList(vals.tolist())
+    #endregion
+
     #region basic properties
     @property
     def real_part(self) -> float:
@@ -246,24 +262,57 @@ class Quat:
     #endregion
 
     #region euler angle related
-    def GetEulerAngles(self, degrees: bool=True) -> Vector3:
-        # http://answers.unity.com/answers/1699764/view.html
-        pitch = math.atan2(2*self.x*self.w-2*self.y*self.z, 1-2*self.x**2-2*self.z**2)
-        yaw = math.atan2(2*self.y*self.w-2*self.x*self.z, 1-2*self.y**2-2*self.z**2)
-        roll = math.asin(2*self.x*self.y+2*self.z*self.w)
-        if degrees:
-            rad2deg = 180 / math.pi
-            pitch *= rad2deg
-            yaw *= rad2deg
-            roll *= rad2deg
-        return Vector3(pitch, yaw, roll) # Is this the correct order?
+    def GetEulerAngles(self, deg: bool=True, order: str='zxy') -> Vector3:
+        # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
+        assert all([letter in list('xyz') for letter in list(order)])
+        order0 = f"w{order}"
+        # p0, p1, p2, p3 = [getattr(self, letter) for letter in list(order0)]
+        
+        # p0, p3, p1, p2 = q.w, q.x, q.y, q.z
+        # p0 = q.w; p3 = q.x; p1 = q.y; p2 = q.z
+        # -> p0, p1, p2, p3 = [q.w, q.y, q.z, q.x]
+        p0 = self.w
+        p1, p2, p3 = self.vector_part.transpose(order, inverse=False).ToList()
+        i = Vector3(1,0,0)
+        j = Vector3(0,1,0)
+        k = Vector3(0,0,1)
+        direction_map = {letter: direction for letter, direction in zip(list('xyz'), [i,j,k])}
+        e3 = direction_map[order[2]]
+        e2 = direction_map[order[1]]
+        e1 = Quat.from_vector_part(e3) * Quat.from_vector_part(e2)
+        e = getattr(e1, order[0])
 
+        sin_yangle = 2 * (p0 * p2 + e * p1 * p3)
+        # print(f"{math.degrees(y_angle)=}")
+        if abs(sin_yangle) < 1: # Is this threshold small enough?
+            y_angle = math.asin(sin_yangle)
+            x_angle = math.atan2(
+                2 * (p0 * p1 - e * p2 * p3),
+                1 - 2 * (p1**2 + p2**2)
+            )
+            z_angle = math.atan2(
+                2 * (p0 * p3 - e * p1 * p2),
+                1 - 2 * (p2**2 + p3**2)
+            )
+        else:
+            print("Warning: Encountered Singularity when calculating euler angles.")
+            y_angle =  math.copysign(math.pi / 2, sin_yangle)
+            z_angle = 0
+            x_angle = math.atan2(p1, p0)
+        if deg:
+            x_angle = math.degrees(x_angle)
+            y_angle = math.degrees(y_angle)
+            z_angle = math.degrees(z_angle)
+        
+        return Vector3(x_angle, y_angle, z_angle).transpose(order, inverse=True)
+    
     @property
     def eulerAngles(self) -> Vector3:
-        return self.GetEulerAngles(degrees=True)
+        return self.GetEulerAngles(deg=True)
 
     @staticmethod
     def EulerVector(euler: Vector3, deg: bool=True, order: str='zxy') -> Quat:
+        assert all([letter in list('xyz') for letter in list(order)])
         # https://math.stackexchange.com/a/2975462
         # Note: Unity uses order='zxy'
         x0 = euler.x / 2

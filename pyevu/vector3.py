@@ -198,7 +198,7 @@ class Vector3:
     def FromNumpy(cls, arr: np.ndarray) -> Vector3:
         return Vector3.FromList(arr.reshape(-1).tolist())
 
-    def transpose(self, order: str) -> Vector3:
+    def transpose(self, order: str, inverse: bool=False) -> Vector3:
         # Example: vec3.transpose('zyx')
         assert len(order) == 3, f"order must be represented with 3 characters"
         expectedLetters = list('xyz')
@@ -211,7 +211,10 @@ class Vector3:
         currentValues = {'x': self.x, 'y': self.y, 'z': self.z}
         newValues = {}
         for i in range(len(expectedLetters)):
-            newValues[expectedLetters[i]] = currentValues[list(order)[i]]
+            if not inverse:
+                newValues[expectedLetters[i]] = currentValues[list(order)[i]]
+            else:
+                newValues[list(order)[i]] = currentValues[expectedLetters[i]]
         return Vector3(x=newValues['x'], y=newValues['y'], z=newValues['z'])
     
     @property
