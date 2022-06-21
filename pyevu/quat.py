@@ -264,53 +264,37 @@ class Quat:
 
     @staticmethod
     def EulerVector(euler: Vector3, deg: bool=True, order: str='zxy') -> Quat:
-        # By default, returns a rotation that rotates z degrees around the z axis,
-        # x degrees around the x axis, and y degrees around the y axis.
-        # This order can be changed with the order parameter.
-
-        # Define individual rotations
-        xRot = Quat.AngleAxis(euler.x, axis=Vector3(1,0,0), deg=deg)
-        yRot = Quat.AngleAxis(euler.y, axis=Vector3(0,1,0), deg=deg)
-        zRot = Quat.AngleAxis(euler.z, axis=Vector3(0,0,1), deg=deg)
-        
-        # work out order
-        assert len(order) == 3, f"order must be represented with 3 characters"
-        expectedLetters = list('xyz')
-        for letter in order:
-            if letter not in expectedLetters:
-                raise ValueError(f"Invalid character: {letter}. Expected one of the following: {expectedLetters}")
-        for letter in expectedLetters:
-            if letter not in list(order):
-                raise ValueError(f"Character missing from order: {letter}. Received: {order}")
-        currentValues = {'x': xRot, 'y': yRot, 'z': zRot}
-        newValues = {}
-        for i in range(len(expectedLetters)):
-            newValues[expectedLetters[i]] = currentValues[list(order)[i]]
-        
-        # Note: yRot * xRot * zRot for unity
-        rot = currentValues['z'] * currentValues['y'] * currentValues['x']
-        return rot
-
+        # https://math.stackexchange.com/a/2975462
+        # Note: Unity uses order='zxy'
+        x0 = euler.x / 2
+        y0 = euler.y / 2
+        z0 = euler.z / 2
+        if deg:
+            x0 = math.radians(x0)
+            y0 = math.radians(y0)
+            z0 = math.radians(z0)
+        qx = Quat(w=math.cos(x0), x=math.sin(x0), y=0, z=0)
+        qy = Quat(w=math.cos(y0), x=0, y=math.sin(y0), z=0)
+        qz = Quat(w=math.cos(z0), x=0, y=0, z=math.sin(z0))
+        values = {'x': qx, 'y': qy, 'z': qz}
+        result: Quat = None
+        for letter in list(order):
+            if result is None:
+                result = values[letter]
+            else:
+                result = values[letter] * result
+        return result
+    
     @staticmethod
     def Euler(x: float, y: float, z: float, deg: bool=True, order: str='zxy') -> Quat:
-        # Returns a rotation that rotates z degrees around the z axis,
-        # x degrees around the x axis, and y degrees around the y axis.
-        # This order can be changed with the order parameter.
         return Quat.EulerVector(Vector3(x,y,z), deg=deg, order=order)
+
     #endregion
 
     #region rotation matrix related
     @property
     def rotation_matrix(self) -> np.ndarray:
-        # TODO: Use scipy's Rotation class to do this instead.
-        """
-        >>> x, y, z = 30, 50, 16 # Unity rotation order
-        >>> R.from_euler('zxy', [z,x,y], degrees=True).as_matrix() # python
-        """
-
         # https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
-        # TODO: This algorithm doesn't seem to work?
-        #       Deprecate this method and replace it with scipy approach.
         m00 = 1 - 2 * self.y**2 - 2 * self.z**2
         m01 = 2 * self.x * self.y - 2 * self.z * self.w
         m02 = 2 * self.x * self.z + 2 * self.y * self.w
