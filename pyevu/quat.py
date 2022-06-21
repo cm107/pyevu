@@ -265,12 +265,6 @@ class Quat:
     def GetEulerAngles(self, deg: bool=True, order: str='zxy') -> Vector3:
         # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
         assert all([letter in list('xyz') for letter in list(order)])
-        order0 = f"w{order}"
-        # p0, p1, p2, p3 = [getattr(self, letter) for letter in list(order0)]
-        
-        # p0, p3, p1, p2 = q.w, q.x, q.y, q.z
-        # p0 = q.w; p3 = q.x; p1 = q.y; p2 = q.z
-        # -> p0, p1, p2, p3 = [q.w, q.y, q.z, q.x]
         p0 = self.w
         p1, p2, p3 = self.vector_part.transpose(order, inverse=False).ToList()
         i = Vector3(1,0,0)
@@ -283,7 +277,6 @@ class Quat:
         e = getattr(e1, order[0])
 
         sin_yangle = 2 * (p0 * p2 + e * p1 * p3)
-        # print(f"{math.degrees(y_angle)=}")
         if abs(sin_yangle) < 1: # Is this threshold small enough?
             y_angle = math.asin(sin_yangle)
             x_angle = math.atan2(
