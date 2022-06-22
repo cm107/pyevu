@@ -339,20 +339,6 @@ class Transform:
             self.Rotate(Vector3.FromList(list(rotation)), deg=deg, order=order)
         else:
             raise TypeError
-    
-    # def LookAt(self, target: Union[Transform, Vector3], worldUp: Vector3):
-    #     if type(target) is Transform:
-    #         targetDirection = target.position - self.position
-    #     elif type(target) is Vector3:
-    #         targetDirection = target - self.position
-    #     else:
-    #         raise TypeError
-    #     forwardRot = Quat.FromToRotation(self.forward, targetDirection)
-    #     print(f"{forwardRot.eulerAngles=}")
-    #     self.rotation = forwardRot * self.rotation
-    #     upRot = Quat.FromToRotation(self.up, worldUp)
-    #     print(f"{upRot.eulerAngles=}")
-    #     self.rotation = upRot * self.rotation
 
     def LookAt(self, target: Union[Transform, Vector3], worldUp: Vector3):
         # https://stackoverflow.com/a/17654730/13797085
