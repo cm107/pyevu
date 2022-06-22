@@ -24,4 +24,13 @@ for euler in [
             or (Quat.EulerVector(euler=euler, order=order).ToNumpy().round(2) == -Quat.EulerVector(euler=euler0, order=order).ToNumpy().round(2)).all(), \
             f"Failed at {euler=}, {order=}. {euler0=}"
 
+assert (
+    Quat.FromToRotation(Vector3.up, Vector3.right).eulerAngles.ToNumpy().round(2)
+    == Vector3(0, 0, -90).ToNumpy().round(2)
+).all()
+assert (
+    Quat.FromToRotation(Vector3.up, Vector3.right + Vector3.up).eulerAngles.ToNumpy().round(2)
+    == Vector3(0, 0, -45).ToNumpy().round(2)
+).all()
+
 print("Passed Test")

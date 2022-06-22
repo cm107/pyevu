@@ -79,7 +79,7 @@ class Quat:
         elif type(other) in [float, int]:
             return Quat(self.w * other, self.x * other, self.y * other, self.z * other)
         else:
-            raise TypeError(f"Cannot multiple {type(self).__name__} with {type(other).__name__}")
+            raise TypeError(f"Cannot multiply {type(self).__name__} with {type(other).__name__}")
     
     def __rmul__(self, other) -> Quat:
         if type(other) is Quat:
@@ -87,7 +87,7 @@ class Quat:
         elif type(other) in [float, int]:
             return self.__mul__(other)
         else:
-            raise TypeError(f"Cannot multiple {type(other).__name__} with {type(self).__name__}")
+            raise TypeError(f"Cannot multiply {type(other).__name__} with {type(self).__name__}")
     
     def __truediv__(self, other) -> Quat:
         if type(other) is Quat:
@@ -262,6 +262,23 @@ class Quat:
         i = axis * math.sin(theta)
 
         return Quat(r, i.x, i.y, i.z)
+    
+    @staticmethod
+    def FromToRotation(fromDirection: Vector3, toDirection: Vector3) -> Quat:
+        """
+        Creates a rotation which rotates from fromDirection to toDirection.
+        https://stackoverflow.com/a/1171995/13797085
+        """
+        dot = Vector3.Dot(fromDirection, toDirection)
+        if dot > 1 - 1e-5: # parallel vectors pointing in same direction
+            return Quat.identity
+        elif dot < -1 + 1e-5: # parallel vectors pointing in opposite direction
+            return Quat(0,1,0,0) # 180 rotation about x axis
+        else:
+            cross = Vector3.Cross(fromDirection, toDirection)
+            w = ((fromDirection.magnitude**2) * (toDirection.magnitude**2))**0.5 + dot
+            q = Quat(w=w, x=cross.x, y=cross.y, z=cross.z)
+            return q.normalized
     #endregion
 
     #region euler angle related

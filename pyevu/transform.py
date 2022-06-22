@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import cast, TYPE_CHECKING
+from typing import cast, Union, overload, TYPE_CHECKING
 import numpy as np
+import math
 from .vector3 import Vector3
 from .quat import Quat
 
@@ -109,45 +110,39 @@ class Transform:
     def position(self) -> Vector3:
         return Vector3.FromNumpy(self.worldTransformationMatrix[:3, 3])
 
-    def SetPosition(self, position: Vector3, delay_update: bool=False):
-        # worldPoint = t_world @ X
-        # localPoint = worldToLocalMatrix @ worldPoint
-        # newLocalPoint = worldToLocalMatrix @ newWorldPoint
-        self._localPosition = self.worldToLocalMatrix @ position
-        if not delay_update:
-            self.UpdateWorldTransformationMatrix()
-
     @position.setter
     def position(self, position: Vector3):
-        self.SetPosition(position, delay_update=False)
+        self.SetPositionAndRotation(position=position)
 
     @property
     def rotation(self) -> Quat:
         return Quat.from_rotation_matrix(self.worldTransformationMatrix[:3, :3])
 
-    def SetRotation(self, rotation: Quat, delay_update: bool=False):
-        # Assuming that a change in world rotation is the same as a change in local rotation
-        # diff * world_q1 = world_q2
-        # => diff = world_q2 * world_q1.inverse
-        # diff * local_q1 = local_q2
-        diffRot = rotation * self.rotation.inverse
-        self._localRotation = diffRot * self.localRotation
-        if not delay_update:
-            self.UpdateWorldTransformationMatrix()
-
     @rotation.setter
     def rotation(self, rotation: Quat):
-        self.SetRotation(rotation, delay_update=False)
+        self.SetPositionAndRotation(rotation=rotation)
 
-    def SetPositionAndRotation(self, position: Vector3, rotation: Quat):
+    def SetPositionAndRotation(self, position: Vector3=None, rotation: Quat=None):
         """
         Sets the world space position and rotation.
         Setting position and rotation individually updates the world transformation matrix twice,
         but using this method updates the world transformation matrix just once, and is therefore
         more efficient.
         """
-        self.SetPosition(position, delay_update=True)
-        self.SetRotation(rotation, delay_update=True)
+        if position is not None:
+            # worldPoint = t_world @ X
+            # localPoint = worldToLocalMatrix @ worldPoint
+            # newLocalPoint = worldToLocalMatrix @ newWorldPoint
+            self._localPosition = self.worldToLocalMatrix @ position
+
+        if rotation is not None:
+            # Assuming that a change in world rotation is the same as a change in local rotation
+            # diff * world_q1 = world_q2
+            # => diff = world_q2 * world_q1.inverse
+            # diff * local_q1 = local_q2
+            diffRot = rotation * self.rotation.inverse
+            self._localRotation = diffRot * self.localRotation
+
         self.UpdateWorldTransformationMatrix()
 
     @property
@@ -291,27 +286,33 @@ class Transform:
     #region Directions
     @property
     def forward(self) -> Vector3:
-        return self.rotation * Vector3.forward
+        # return self.rotation * Vector3.forward
+        return Quat.rotate(v=Vector3.forward, q=self.rotation)
 
     @property
     def backward(self) -> Vector3:
-        return self.rotation * Vector3.backward
+        # return self.rotation * Vector3.backward
+        return Quat.rotate(v=Vector3.backward, q=self.rotation)
 
     @property
     def left(self) -> Vector3:
-        return self.rotation * Vector3.left
+        # return self.rotation * Vector3.left
+        return Quat.rotate(v=Vector3.left, q=self.rotation)
 
     @property
     def right(self) -> Vector3:
-        return self.rotation * Vector3.right
+        # return self.rotation * Vector3.right
+        return Quat.rotate(v=Vector3.right, q=self.rotation)
 
     @property
     def up(self) -> Vector3:
-        return self.rotation * Vector3.up
+        # return self.rotation * Vector3.up
+        return Quat.rotate(v=Vector3.up, q=self.rotation)
 
     @property
     def down(self) -> Vector3:
-        return self.rotation * Vector3.down
+        # return self.rotation * Vector3.down
+        return Quat.rotate(v=Vector3.down, q=self.rotation)
     #endregion
 
     #region Applying To Vertices
@@ -320,4 +321,57 @@ class Transform:
 
     def TransformPoints(self, points: list[Vector3]) -> list[Vector3]:
         return [self.TransformPoint(point) for point in points]
+    #endregion
+
+    #region Movement Related
+    @overload
+    def Rotate(self, rotation: Quat): ...
+
+    @overload
+    def Rotate(self, rotation: Union[Vector3, list, tuple], deg: bool=True, order: str='zxy'): ...
+
+    def Rotate(self, rotation: Union[Quat, Vector3, list, tuple], deg: bool=True, order: str='zxy'):
+        if type(rotation) is Quat:
+            self.localRotation = rotation * self.localRotation
+        elif type(rotation) is Vector3:
+            self.Rotate(Quat.EulerVector(rotation, deg=deg, order=order))
+        elif type(rotation) in [list, tuple]:
+            self.Rotate(Vector3.FromList(list(rotation)), deg=deg, order=order)
+        else:
+            raise TypeError
+    
+    # def LookAt(self, target: Union[Transform, Vector3], worldUp: Vector3):
+    #     if type(target) is Transform:
+    #         targetDirection = target.position - self.position
+    #     elif type(target) is Vector3:
+    #         targetDirection = target - self.position
+    #     else:
+    #         raise TypeError
+    #     forwardRot = Quat.FromToRotation(self.forward, targetDirection)
+    #     print(f"{forwardRot.eulerAngles=}")
+    #     self.rotation = forwardRot * self.rotation
+    #     upRot = Quat.FromToRotation(self.up, worldUp)
+    #     print(f"{upRot.eulerAngles=}")
+    #     self.rotation = upRot * self.rotation
+
+    def LookAt(self, target: Union[Transform, Vector3], worldUp: Vector3):
+        # https://stackoverflow.com/a/17654730/13797085
+        if type(target) is Transform:
+            forwardVector = (target.position - self.position).normalized
+        elif type(target) is Vector3:
+            forwardVector = (target - self.position).normalized
+        else:
+            raise TypeError
+        
+        dot = Vector3.Dot(self.forward, forwardVector)
+        if dot > 1 - 1e-5:
+            q = Quat.identity
+        elif dot < -1 + 1e-5:
+            # Is this correct???
+            q = Quat(math.pi, worldUp.x, worldUp.y, worldUp.z).normalized
+        else:
+            rotAngle = math.acos(dot)
+            rotAxis = Vector3.Cross(self.forward, forwardVector).normalized
+            q = Quat.AngleAxis(angle=rotAngle, axis=rotAxis, deg=False)
+        self.rotation = q * self.rotation
     #endregion
