@@ -6,7 +6,7 @@ from .quat import Quat
 
 if TYPE_CHECKING:
     # Refer to https://www.stefaanlippens.net/circular-imports-type-hints-python.html
-    from .gameObject_refactor import GameObject
+    from .gameObject import GameObject
 
 class Transform:
     def __init__(self, position: Vector3, rotation: Quat, parent: Transform=None, gameObject: GameObject=None):
