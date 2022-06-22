@@ -40,7 +40,6 @@ setup(
     install_requires=[
         # 'argcomplete>=1.12.3',
         'pylint>=2.12.2',
-        'pyquaternion>=0.9.9',
         'numpy>=1.21.5'
     ],
     python_requires='>=3.9',

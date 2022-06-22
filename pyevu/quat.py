@@ -95,7 +95,7 @@ class Quat:
         elif type(other) in [float, int]:
             return self.__mul__(1/other)
         else:
-            raise TypeError
+            raise TypeError(f"Cannot perform {type(self).__name__} divided by {type(other).__name__}")
     
     def __rtruediv__(self, other) -> Quat:
         if type(other) is Quat:
@@ -118,6 +118,9 @@ class Quat:
     @staticmethod
     def FromNumpy(vals: np.ndarray) -> Quat:
         return Quat.FromList(vals.tolist())
+    
+    def Copy(self) -> Quat:
+        return Quat.FromList(self.ToList())
     #endregion
 
     #region basic properties
@@ -150,7 +153,7 @@ class Quat:
     @classmethod
     @property
     def identity(cls) -> Quat:
-        return Quat.one
+        return Quat(1, 0, 0, 0)
 
     @property
     def norm(self) -> float:
@@ -406,28 +409,28 @@ class Quat:
             x = (m[2,1] - m[1,2]) / (4 * w)
             y = (m[0,2] - m[2,0]) / (4 * w)
             z = (m[1,0] - m[0,1]) / (4 * w)
-            return Quat(w,x,y,z)
+            return Quat(*[val.tolist() for val in [w,x,y,z]])
         elif diagonal == 'x':
             x = 0.5 * (1 + m[0,0] - m[1,1] - m[2,2])**0.5 if x is None else x
             x = x * -1 if neg_diagonal else x
             w = (m[2,1] - m[1,2]) / (4 * x)
             y = (m[1,0] + m[0,1]) / (4 * x)
             z = (m[0,2] + m[2,0]) / (4 * x)
-            return Quat(w,x,y,z)
+            return Quat(*[val.tolist() for val in [w,x,y,z]])
         elif diagonal == 'y':
             y = 0.5 * (1 + m[1,1] - m[0,0] - m[2,2])**0.5 if y is None else y
             y = y * -1 if neg_diagonal else y
             w = (m[0,2] - m[2,0]) / (4 * y)
             x = (m[1,0] + m[0,1]) / (4 * y)
             z = (m[2,1] + m[1,2]) / (4 * y)
-            return Quat(w,x,y,z)
+            return Quat(*[val.tolist() for val in [w,x,y,z]])
         elif diagonal == 'z':
             z = 0.5 * (1 + m[2,2] - m[0,0] - m[1,1])**0.5 if z is None else z
             z = z * -1 if neg_diagonal else z
             w = (m[1,0] - m[0,1]) / (4 * z)
             x = (m[0,2] - m[2,0]) / (4 * z)
             y = (m[2,1] - m[1,2]) / (4 * z)
-            return Quat(w,x,y,z)
+            return Quat(*[val.tolist() for val in [w,x,y,z]])
         else:
             raise Exception
     #endregion
