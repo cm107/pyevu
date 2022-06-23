@@ -133,7 +133,7 @@ class Transform:
             # worldPoint = t_world @ X
             # localPoint = worldToLocalMatrix @ worldPoint
             # newLocalPoint = worldToLocalMatrix @ newWorldPoint
-            self._localPosition = self.worldToLocalMatrix @ position
+            self._localPosition = Vector3.FromNumpy((self.worldToLocalMatrix @ position.mat4.T).T.reshape(-1)[:3])
 
         if rotation is not None:
             # Assuming that a change in world rotation is the same as a change in local rotation
