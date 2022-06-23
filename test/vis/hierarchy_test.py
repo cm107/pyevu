@@ -53,6 +53,11 @@ def update_transforms(
         boomAxis.transform.Rotate(Quat.Euler(-10, 0, 0))
     elif 'v' in pressed_keys:
         boomAxis.transform.Rotate(Quat.Euler(10, 0, 0))
+    if 'left' in pressed_keys:
+        boomAxis.transform.Rotate(Quat.Euler(0, 0, -10))
+    elif 'right' in pressed_keys:
+        boomAxis.transform.Rotate(Quat.Euler(0, 0, 10))
+
     if 'b' in pressed_keys:
         armAxis.transform.Rotate(Quat.Euler(-10, 0, 0))
     elif 'n' in pressed_keys:

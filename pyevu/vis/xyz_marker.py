@@ -223,6 +223,7 @@ class GameObjectMarkerScene:
         self.ax.view_init(vertical_axis='y')
 
         self._pressed_keys: list[str] = []
+        self.fig.canvas.mpl_disconnect(self.fig.canvas.manager.key_press_handler_id)
         self.fig.canvas.mpl_connect('key_press_event', self.on_press)
         self.fig.canvas.mpl_connect('key_release_event', self.on_release)
 
