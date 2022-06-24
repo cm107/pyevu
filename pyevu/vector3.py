@@ -170,10 +170,13 @@ class Vector3:
         bMag = b.magnitude
         if aMag == 0 or bMag == 0:
             return None
+        ratio = Vector3.Dot(a,b) / (aMag * bMag)
+        if abs(ratio) >= 1:
+            return 0
         if not deg:
-            return math.acos(Vector3.Dot(a,b) / (aMag * bMag))
+            return math.acos(ratio)
         else:
-            return math.acos(Vector3.Dot(a,b) / (aMag * bMag)) * rad2deg
+            return math.acos(ratio) * rad2deg
 
     @classmethod
     def SignedAngle(cls, a: Vector3, b: Vector3, axis: Vector3, deg: bool=False) -> float:

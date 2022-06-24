@@ -379,7 +379,8 @@ class Quat:
                 [m00, m01, m02],
                 [m10, m11, m12],
                 [m20, m21, m22]
-            ]
+            ],
+            dtype='float64'
         )
 
     @staticmethod

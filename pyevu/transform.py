@@ -151,8 +151,12 @@ class Transform:
     
     @localPosition.setter
     def localPosition(self, position: Vector3):
+        before = self.localPosition
+        world_before = self.position
         self._localPosition = position
         self.UpdateWorldTransformationMatrix()
+        after = self.localPosition
+        world_after = self.position
 
     @property
     def localRotation(self) -> Quat:
@@ -172,7 +176,7 @@ class Transform:
     def localTransformationMatrix(self) -> np.ndarray:
         mat = self.localRotation.rotation_matrix
         mat = np.pad(mat, [(0, 1), (0, 1)], mode='constant', constant_values=0)
-        mat[0:4, 3] = np.array(self.localPosition.ToList() + [1])
+        mat[0:4, 3] = np.array(self.localPosition.ToList() + [1], dtype='float64')
         return mat
 
     def UpdateWorldTransformationMatrix(self):
