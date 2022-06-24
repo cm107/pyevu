@@ -172,18 +172,35 @@ class Vector3:
             return None
         ratio = Vector3.Dot(a,b) / (aMag * bMag)
         if abs(ratio) >= 1:
-            return 0
-        if not deg:
-            return math.acos(ratio)
+            angle = 0 if ratio > 0 else math.pi
+            if deg:
+                angle *= rad2deg
+            return angle
         else:
-            return math.acos(ratio) * rad2deg
+            angle = math.acos(ratio)
+            if deg:
+                angle *= rad2deg
+            return angle
 
     @classmethod
     def SignedAngle(cls, a: Vector3, b: Vector3, axis: Vector3, deg: bool=False) -> float:
         # Returns the signed angle in degrees between a and b.
-        angle = Vector3.Angle(a, b, deg=deg)
-        angle = math.copysign(angle, Vector3.Dot(axis, Vector3.Cross(a, b)))
-        return angle
+        aMag = a.magnitude
+        bMag = b.magnitude
+        if aMag == 0 or bMag == 0:
+            return None
+        ratio = Vector3.Dot(a,b) / (aMag * bMag)
+        if abs(ratio) >= 1:
+            angle = 0 if ratio > 0 else math.pi
+            if deg:
+                angle *= rad2deg
+            return angle
+        else:
+            angle = math.acos(ratio)
+            if deg:
+                angle *= rad2deg
+            angle = math.copysign(angle, Vector3.Dot(axis, Vector3.Cross(a, b)))
+            return angle
 
     def ToList(self) -> List[float]:
         return [self.x, self.y, self.z]
