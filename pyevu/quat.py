@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, overload
 import math
 import numpy as np
 from .vector3 import Vector3
@@ -73,9 +73,17 @@ class Quat:
         else:
             raise TypeError
     
-    def __mul__(self, other) -> Quat:
+    @overload
+    def __mul__(self, other: Union[Quat, float, int]) -> Quat: ...
+
+    @overload
+    def __mul__(self, other: Vector3) -> Vector3: ...
+
+    def __mul__(self, other: Union[Quat, Vector3, float, int]) -> Union[Quat, Vector3]:
         if type(other) is Quat:
             return Quat.hamilton_product(q0=self, q1=other)
+        elif type(other) is Vector3:
+            return Quat.rotate(v=other, q=self)
         elif type(other) in [float, int]:
             return Quat(self.w * other, self.x * other, self.y * other, self.z * other)
         else:
@@ -242,7 +250,7 @@ class Quat:
             return (q0 * Quat.from_vector_part(v) * q0.inverse).vector_part
     
     @staticmethod
-    def AngleAxis(angle: float, axis: Vector3, deg: bool=True):
+    def AngleAxis(angle: float, axis: Vector3, deg: bool=True) -> Quat:
         """Initialise from axis and angle representation.
         Algorithm copied from pyquaternion's _from_axis_angle implementation
         and then modified to use this packages classes.
