@@ -112,3 +112,5 @@ for go, gt in zip(
     go.transform.PrintHierarchy()
     print(f"{go.transform.worldTransformationMatrix.round(2)}")
     print(f"{gt.round(2)}")
+    print(f"{go.name} {go.transform.localToWorldMatrix.round(4)=}")
+    print(f"{go.name} {go.transform.worldToLocalMatrix.round(4)=}")

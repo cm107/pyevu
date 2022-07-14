@@ -212,26 +212,12 @@ class Transform:
     @property
     def localToWorldMatrix(self) -> np.ndarray:
         """Matrix that transforms a point from local space into world space"""
-        # localPoint = t_local @ X
-        # worldPoint = t_world @ X
-        # worldPoint = mat @ localPoint
-        # => (t_world @ X) = mat @ (t_local @ X)
-        # => (t_world) @ X = (mat @ t_local) @ X
-        # => t_world = mat @ t_local
-        # => mat = t_world @ t_local.inv
-        return self.worldTransformationMatrix @ np.linalg.inv(self.localTransformationMatrix)
+        return self.worldTransformationMatrix
     
     @property
     def worldToLocalMatrix(self) -> np.ndarray:
         """Matrix that transforms a point from world space into local space"""
-        # localPoint = t_local @ X
-        # worldPoint = t_world @ X
-        # localPoint = mat @ worldPoint
-        # => (t_local @ X) = mat @ (t_world @ X)
-        # => (t_local) @ X = (mat @ t_world) @ X
-        # => t_local = mat @ t_world
-        # => mat = t_local @ t_world.inv
-        return self.localTransformationMatrix @ np.linalg.inv(self.worldTransformationMatrix)
+        return np.linalg.inv(self.localToWorldMatrix)
     #endregion
 
     #region Hierarchy Utility
