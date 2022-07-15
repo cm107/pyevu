@@ -141,6 +141,12 @@ class Vector3:
             z=a.x * b.y - a.y * b.x
         )
     
+    @staticmethod
+    def Project(a: Vector3, b: Vector3) -> Vector3:
+        b_norm = b.normalized
+        scalarProjection = Vector3.Dot(a, b_norm)
+        return scalarProjection * b_norm
+
     @property
     def magnitude(self) -> float:
         return (self.x**2 + self.y**2 + self.z**2)**0.5

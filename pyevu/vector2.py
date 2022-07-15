@@ -115,6 +115,12 @@ class Vector2:
     def Cross(cls, a: Vector2, b: Vector2) -> float:
         return a.x * b.y - a.y * b.x
     
+    @staticmethod
+    def Project(a: Vector2, b: Vector2) -> Vector2:
+        b_norm = b.normalized
+        scalarProjection = Vector2.Dot(a, b_norm)
+        return scalarProjection * b_norm
+
     @property
     def magnitude(self) -> float:
         return (self.x**2 + self.y**2)**0.5
