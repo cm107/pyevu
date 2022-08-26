@@ -226,6 +226,9 @@ class Quat:
         y = a1c2 - b1d2 + c1a2 + d1b2
         z = a1d2 + b1c2 - c1b2 + d1a2
 
+        # Same thing?
+        # (Quaternion Product) pq: (pq).w = wp*wq - Vector3.Dot(vp, vq), (pq).v = wp * vq + wq * vp + Vector3.Cross(vp, vq)
+
         return Quat(w, x, y, z)
 
     @staticmethod
@@ -287,6 +290,50 @@ class Quat:
             w = ((fromDirection.magnitude**2) * (toDirection.magnitude**2))**0.5 + dot
             q = Quat(w=w, x=cross.x, y=cross.y, z=cross.z)
             return q.normalized
+    
+    @staticmethod
+    def LookRotation(forward: Vector3, upwards: Vector3=Vector3.up) -> Quat:
+        """Creates a rotation with the specified forward and upwards directions."""
+        # (Quaternion Product)
+        #   (pq).w = wp*wq - Vector3.Dot(vp, vq)
+        #   (pq).v = wp * vq + wq * vp + Vector3.Cross(vp, vq)
+        #  
+        # forward = (q * Quat.from_vector_part(Vector3.forward) * q.inverse).vector_part
+        # upward = (q * Quat.from_vector_part(Vector3.up) * q.inverse).vector_part
+        # 
+        # f = Quat.from_vector_part(Vector3.forward)
+        # (q*f).w = wp*wf - Vector3.Dot(vq, vf)
+        #         = (0) - (vq.z) 
+        # (q*f).w = -vq.z
+        # (q*f).v = wq * vf + wf * vq + Vector3.Cross(vq, vf)
+        #         = (0,0,wq) + (0) * vq + Vector3.Cross(vq, (0,0,1))
+        #         = (0,0,wq) + (0) * vq + (vq.y, -vq.x, 0)
+        # (q*f).v = (vq.y,-vq.x,wq)
+        # 
+        # u = Quat.from_vector_part(Vector3.up)
+        # (q*u).w = wp*wu - Vector3.Dot(vq, vu)
+        #         = wp*(0) - (vq.y)
+        # (q*u).w = -vq.y
+        # (q*u).v = wq * vu + wu * vq + Vector3.Cross(vq, vu)
+        #         = (0,wq,0) + (0) * vq + (0-vq.z, 0+0, vq.x-0)
+        # (q*u).v = (-vq.z, wq, vq.x)
+
+        f = forward.normalized
+        u = upwards.normalized
+        r = Vector3.Cross(u, f)
+
+        # f = m * Vector3.forward = m.z
+        # u = m * Vector3.up = m.y
+        # r = m * Vector3.right = m.z
+
+        m = np.array(
+            [
+                [r.x, u.x, f.x],
+                [r.y, u.y, f.y],
+                [r.z, u.z, f.z]
+            ]
+        )
+        return Quat.from_rotation_matrix(m)
     #endregion
 
     #region euler angle related

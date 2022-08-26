@@ -24,13 +24,42 @@ for euler in [
             or (Quat.EulerVector(euler=euler, order=order).ToNumpy().round(2) == -Quat.EulerVector(euler=euler0, order=order).ToNumpy().round(2)).all(), \
             f"Failed at {euler=}, {order=}. {euler0=}"
 
-assert (
-    Quat.FromToRotation(Vector3.up, Vector3.right).eulerAngles.ToNumpy().round(2)
-    == Vector3(0, 0, -90).ToNumpy().round(2)
-).all()
-assert (
-    Quat.FromToRotation(Vector3.up, Vector3.right + Vector3.up).eulerAngles.ToNumpy().round(2)
-    == Vector3(0, 0, -45).ToNumpy().round(2)
-).all()
+# Look Rotation Test
+def vec3_match(value: Vector3, expected: Vector3, decimals: int=2) -> bool:
+    return (value.ToNumpy().round(decimals) == expected.ToNumpy().round(decimals)).all()
+
+def euler_match(value: Vector3, expected: Vector3, decimals: int=2) -> bool:
+    def standardize(v: float) -> float:
+        v %= 360
+        if v < 0:
+            v += 360
+        return v
+
+    value = Vector3.FromList([standardize(v) for v in value.ToList()])
+    expected = Vector3.FromList([standardize(v) for v in expected.ToList()])
+    return vec3_match(value=value, expected=expected, decimals=decimals)
+
+assert euler_match(
+    Quat.LookRotation(Vector3.forward, Vector3.up).eulerAngles,
+    Vector3(0, 0, 0)
+), f"{Quat.LookRotation(Vector3.forward, Vector3.up).eulerAngles=}"
+assert euler_match(
+    Quat.LookRotation(Vector3.right, Vector3.up).eulerAngles,
+    Vector3(0, 90, 0)
+), f"{Quat.LookRotation(Vector3.right, Vector3.up).eulerAngles=}"
+assert euler_match(
+    Quat.LookRotation(Vector3.left, Vector3.forward).eulerAngles,
+    Vector3(0, 270, 270)
+), f"{Quat.LookRotation(Vector3.left, Vector3.forward).eulerAngles=}"
+
+# # FromToRotation Test
+# assert (
+#     Quat.FromToRotation(Vector3.up, Vector3.right).eulerAngles.ToNumpy().round(2)
+#     == Vector3(0, 0, -90).ToNumpy().round(2)
+# ).all()
+# assert (
+#     Quat.FromToRotation(Vector3.up, Vector3.right + Vector3.up).eulerAngles.ToNumpy().round(2)
+#     == Vector3(0, 0, -45).ToNumpy().round(2)
+# ).all()
 
 print("Passed Test")
