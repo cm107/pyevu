@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, List, Tuple
+from typing import Union
 import math
 import numpy as np
 from .mathf import rad2deg
@@ -77,7 +77,7 @@ class Vector3:
 
     @classmethod
     def RandomRange(
-        cls, x: Tuple[float, float], y: Tuple[float, float], z: Tuple[float, float]
+        cls, x: tuple[float, float], y: tuple[float, float], z: tuple[float, float]
     ) -> Vector3:
         return Vector3(
             x=Random.FloatRange(*x),
@@ -208,20 +208,29 @@ class Vector3:
             angle = math.copysign(angle, Vector3.Dot(axis, Vector3.Cross(a, b)))
             return angle
 
-    def ToList(self) -> List[float]:
+    def ToList(self) -> list[float]:
         return [self.x, self.y, self.z]
     
-    @classmethod
-    def FromList(self, vals: List[float]) -> Vector3:
+    @staticmethod
+    def FromList(vals: list[float]) -> Vector3:
         if len(vals) != 3:
             raise Exception(f"Expected a list of length 3. Encountered length: {len(vals)}")
         return Vector3(vals[0], vals[1], vals[2])
     
+    def ToTuple(self) -> tuple[float]:
+        return (self.x, self.y, self.z)
+    
+    @staticmethod
+    def FromTuple(vals: tuple[float]) -> Vector3:
+        if len(vals) != 3:
+            raise Exception(f"Expected a tuple of length 3. Encountered length: {len(vals)}")
+        return Vector3(vals[0], vals[1], vals[2])
+
     def ToNumpy(self) -> np.ndarray:
         return np.array(self.ToList())
 
-    @classmethod
-    def FromNumpy(cls, arr: np.ndarray) -> Vector3:
+    @staticmethod
+    def FromNumpy(arr: np.ndarray) -> Vector3:
         return Vector3.FromList(arr.reshape(-1).tolist())
 
     def transpose(self, order: str, inverse: bool=False) -> Vector3:
