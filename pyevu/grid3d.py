@@ -99,7 +99,7 @@ class Grid3D(Generic[T]):
             z=round(relPosition.z / self.cellDepth, max=max)
         )
 
-    def Grid2WorldCoord(self, gridCoord: Vector3) -> Vector3:
+    def Grid2WorldPosition(self, gridCoord: Vector3) -> Vector3:
         return Vector3(
             x=self.origin.x + gridCoord.x * self.cellWidth,
             y=self.origin.y + gridCoord.y * self.cellHeight,
@@ -108,7 +108,7 @@ class Grid3D(Generic[T]):
     
     def GetWorldPositionIfValid(self, gridCoord: Vector3) -> Vector3:
         if self.gridBoundingBox.Contains(gridCoord):
-            return self.Grid2WorldCoord(gridCoord)
+            return self.Grid2WorldPosition(gridCoord)
         else:
             return None
 
@@ -187,7 +187,7 @@ class Grid3D(Generic[T]):
         spheres = [sphere0, sphere1]
 
         def initGrid(g: Grid3D[SDFObject], coord: Vector3):
-            p = grid.Grid2WorldCoord(coord)
+            p = grid.Grid2WorldPosition(coord)
             g[coord] = SDFObject(Sphere.SDF_intersection(p, spheres))
         
         def callback(coord: Vector3):

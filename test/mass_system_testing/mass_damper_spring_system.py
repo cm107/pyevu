@@ -1,10 +1,18 @@
 from __future__ import annotations
 import math
-from typing import Callable
-import matplotlib.pyplot as plt
+import sys
+from typing import Callable, TypeVar, Generic
 import os
 
-class State:
+import importlib
+for import_name in ['matplotlib', 'numpy']:
+    if importlib.util.find_spec(import_name) is None:
+        raise ImportError(f"Need to install {import_name} in order to run this script.")
+import matplotlib.pyplot as plt
+
+T = TypeVar('T')
+
+class State: # TODO: Make this generic accepting types: float, Vector2, and Vector3
     def __init__(self, p: float=None, v: float=None, a: float=None):
         self.p = p
         self.v = v
@@ -15,7 +23,54 @@ class State:
     def zero(self) -> State:
         return State(p=0, v=0, a=0)
 
-class LeapFrog:
+from pyevu import Vector2, Vector3
+
+class State0(Generic[T], object):
+    def __init__(self, p: T=None, v: T=None, a: T=None):
+        self.p = p
+        self.v = v
+        self.a = a
+
+    def get_generic_type(self): # Note: Can't be called from __init__
+        return self.__orig_class__.__args__[0]
+
+    # @classmethod
+    # @property
+    # def zero(self: T) -> State0[T]: # This won't work.
+    #     # gen_type = State0[T]().get_generic_type()
+    #     gen_type = self.get_generic_type(self)
+    #     print(f"{gen_type=}")
+    #     if gen_type is float:
+    #         return State[float](p=0, v=0, a=0)
+    #     else:
+    #         raise TypeError
+    
+    def is_valid_type(self) -> bool:
+        gen_type = self.get_generic_type()
+        if gen_type not in [float, Vector2, Vector3]:
+            return False
+        for val in [self.p, self.v, self.a]:
+            if type(val) is not gen_type:
+                return False
+        return True
+
+    @staticmethod
+    def test_is_valid_type():
+        assert State0[Vector3](p=Vector3.zero, v=Vector3.zero, a=Vector3.zero).is_valid_type()
+        assert not State0[Vector3](p=Vector3.zero, v=Vector2.zero, a=Vector3.zero).is_valid_type()
+        assert not State0[Vector2](p=Vector3.zero, v=Vector3.zero, a=Vector3.zero).is_valid_type()
+        print(f"Passed: {State0.__name__} is_valid_type is working correctly")
+
+    @staticmethod
+    def test_bench():
+        State0.test_is_valid_type()
+
+# print(f"{State0[float]().get_generic_type() is float=}")
+# print(f"{State0[Vector2](p=Vector2.zero, v=Vector2.zero, a=Vector2.zero).is_valid_type()=}")
+# import sys
+# sys.exit()
+
+class LeapFrog: # TODO: Make this generic accepting types: float, Vector2, and Vector3
     def __init__(self, init_state: State):
         self.state = init_state
     
@@ -44,7 +99,67 @@ class LeapFrog:
     def a(self, value: float):
         self.state.a = value
 
-class MassDamperSpring:
+class LeapFrog0(Generic[T], object):
+    def __init__(self, init_state: State0[T]):
+        self.state = init_state
+    
+    def get_generic_type(self): # Note: Can't be called from __init__
+        return self.__orig_class__.__args__[0]
+    
+    def is_valid_type(self) -> bool:
+        gen_type = self.get_generic_type()
+        if gen_type not in [float, Vector2, Vector3]:
+            return False
+        if gen_type is not self.state.get_generic_type():
+            return False
+        if not self.state.is_valid_type():
+            return False
+        return True
+
+    def next_state(self, a: T, dt: float=0.05) -> State0[T]:
+        half_v = self.state.v + self.state.a * dt * 0.5
+        p = self.state.p + half_v * dt
+        v = half_v + a * dt / 2
+        return State[T](p=p, v=v, a=a)
+    
+    def update(self, a: T, dt: float=0.05):
+        self.state = self.next_state(a=a, dt=dt)
+    
+    @property
+    def p(self) -> T:
+        return self.state.p
+    
+    @property
+    def v(self) -> T:
+        return self.state.v
+    
+    @property
+    def a(self) -> T:
+        return self.state.a
+    
+    @a.setter
+    def a(self, value: T):
+        self.state.a = value
+
+    @staticmethod
+    def test_is_valid_type():
+        assert LeapFrog0[Vector3](init_state=State0[Vector3](p=Vector3.zero, v=Vector3.zero, a=Vector3.zero)).is_valid_type()
+        assert not LeapFrog0[Vector3](init_state=State0[Vector3](p=Vector3.zero, v=Vector2.zero, a=Vector3.zero)).is_valid_type()
+        assert not LeapFrog0[Vector2](init_state=State0[Vector3](p=Vector3.zero, v=Vector3.zero, a=Vector3.zero)).is_valid_type()
+        assert not LeapFrog0[Vector3](init_state=State0[Vector2](p=Vector3.zero, v=Vector3.zero, a=Vector3.zero)).is_valid_type()
+        print(f"Passed: {LeapFrog0.__name__} is_valid_type is working correctly")
+
+    @staticmethod
+    def test_bench():
+        LeapFrog0.test_is_valid_type()
+
+# State0.test_bench()
+# LeapFrog0.test_bench()
+# import sys
+# sys.exit()
+
+class MassDamperSpring: # TODO: I probably can't change this class into generic because of rotations in 2D and 3D,
+                        #       but I can probably make a generic child class and move all common methods into the child class.
     def __init__(
         self, m: float, c: float, k: float,
         init_state: State=State.zero,
