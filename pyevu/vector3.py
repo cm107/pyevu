@@ -71,6 +71,9 @@ class Vector3:
             return Vector3(x=1/self.x, y=1/self.y, z=1/self.z).__mul__(other)
         else:
             raise TypeError(f"Can't divide {type(self).__name__} from {type(other).__name__}")
+    
+    def __iter__(self):
+        return iter([self.x, self.y, self.z])
 
     def Copy(self) -> Vector3:
         return Vector3.FromList(self.ToList())
