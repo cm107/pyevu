@@ -71,7 +71,7 @@ class Vector2:
             raise TypeError(f"Can't divide {type(self).__name__} from {type(other).__name__}")
 
     def __iter__(self):
-        return iter([self.x, self.y, self.z])
+        return iter([self.x, self.y])
 
     def Copy(self) -> Vector2:
         return Vector2.FromList(self.ToList())
