@@ -12,3 +12,4 @@ from .transform import Transform
 from .gameObject import GameObject
 from .timestamp import Timestamp
 from .random import Random
+from .event import Event
