@@ -4,6 +4,7 @@ import math
 import numpy as np
 from .mathf import rad2deg
 from .random import Random
+from .vector2 import Vector2
 
 class Vector3:
     def __init__(self, x: float, y: float, z: float):
@@ -235,6 +236,13 @@ class Vector3:
     @staticmethod
     def FromNumpy(arr: np.ndarray) -> Vector3:
         return Vector3.FromList(arr.reshape(-1).tolist())
+
+    def ToVector2(self) -> Vector2:
+        return Vector2(self.x, self.y)
+    
+    @staticmethod
+    def FromVector2(vec: Vector2) -> Vector3:
+        return Vector3(vec.x, vec.y, 0)
 
     def transpose(self, order: str, inverse: bool=False) -> Vector3:
         # Example: vec3.transpose('zyx')
