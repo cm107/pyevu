@@ -12,12 +12,17 @@ class Grid3D(Generic[T]):
         self,
         width: int, depth: int, height: int,
         cellWidth: float=1, cellDepth: float=1, cellHeight: float=1,
-        origin: Vector3=Vector3.zero
+        origin: Vector3=Vector3.zero,
+        countCorners: bool=True
     ):
         self._width = width; self._depth = depth; self._height = height
         self._cellWidth = cellWidth; self._cellDepth = cellDepth; self._cellHeight = cellHeight
         self._origin = origin
-        self._obj_arr = np.empty(shape=(width+1, depth+1, height+1), dtype=np.object_)
+        self._countCorners = countCorners
+        if self._countCorners:
+            self._obj_arr = np.empty(shape=(width+1, depth+1, height+1), dtype=np.object_)
+        else:
+            self._obj_arr = np.empty(shape=(width, depth, height), dtype=np.object_)
         self.OnGridObjectChanged: list[Callable[[Vector3],]] = []
 
     @property
@@ -85,7 +90,10 @@ class Grid3D(Generic[T]):
 
     @property
     def gridBoundingBox(self) -> BBox3D:
-        return BBox3D(v0=Vector3.zero, v1=Vector3(self.width, self.height, self.depth))
+        if self._countCorners:
+            return BBox3D(v0=Vector3.zero, v1=Vector3(self.width, self.height, self.depth))
+        else:
+            return BBox3D(v0=Vector3.zero, v1=Vector3(self.width-1, self.height-1, self.depth-1))
 
     def World2GridCoord(self, worldCoord: Vector3, max: bool=False) -> Vector3:
         relPosition = worldCoord - self.origin
@@ -117,15 +125,12 @@ class Grid3D(Generic[T]):
             bbox = BBox3D.Intersection(bbox, self.gridBoundingBox)
             if bbox is None: # No intersection. BBox is completely outside of grid.
                 return
-
-        if bbox is not None:
-            xmin = bbox.v0.x; xmax = bbox.v1.x
-            ymin = bbox.v0.y; ymax = bbox.v1.y
-            zmin = bbox.v0.z; zmax = bbox.v1.z
         else:
-            xmin = 0; xmax = self.width
-            ymin = 0; ymax = self.height
-            zmin = 0; zmax = self.depth
+            bbox = self.gridBoundingBox
+
+        xmin = bbox.v0.x; xmax = bbox.v1.x
+        ymin = bbox.v0.y; ymax = bbox.v1.y
+        zmin = bbox.v0.z; zmax = bbox.v1.z
         
         for y in range(ymin, ymax+1, 1):
             for z in range(zmin, zmax+1, 1):

@@ -12,12 +12,17 @@ class Grid2D(Generic[T]):
         self,
         width: int, height: int,
         cellWidth: float=1, cellHeight: float=1,
-        origin: Vector2=Vector2.zero
+        origin: Vector2=Vector2.zero,
+        countCorners: bool=True
     ):
         self._width = width; self._height = height
         self._cellWidth = cellWidth; self._cellHeight = cellHeight
         self._origin = origin
-        self._obj_arr = np.empty(shape=(width+1, height+1), dtype=np.object_)
+        self._countCorners = countCorners
+        if self._countCorners:
+            self._obj_arr = np.empty(shape=(width+1, height+1), dtype=np.object_)
+        else:
+            self._obj_arr = np.empty(shape=(width, height), dtype=np.object_)
         self.OnGridObjectChanged: list[Callable[[Vector2],]] = []
 
     @property
@@ -77,7 +82,10 @@ class Grid2D(Generic[T]):
 
     @property
     def gridBoundingBox(self) -> BBox2D:
-        return BBox2D(v0=Vector2.zero, v1=Vector2(self.width, self.height))
+        if self._countCorners:
+            return BBox2D(v0=Vector2.zero, v1=Vector2(self.width, self.height))
+        else:
+            return BBox2D(v0=Vector2.zero, v1=Vector2(self.width-1, self.height-1))
 
     def World2GridCoord(self, worldCoord: Vector2, max: bool=False) -> Vector2:
         relPosition = worldCoord - self.origin
@@ -107,13 +115,11 @@ class Grid2D(Generic[T]):
             bbox = BBox2D.Intersection(bbox, self.gridBoundingBox)
             if bbox is None: # No intersection. BBox is completely outside of grid.
                 return
-
-        if bbox is not None:
-            xmin = bbox.v0.x; xmax = bbox.v1.x
-            ymin = bbox.v0.y; ymax = bbox.v1.y
         else:
-            xmin = 0; xmax = self.width
-            ymin = 0; ymax = self.height
+            bbox = self.gridBoundingBox
+
+        xmin = bbox.v0.x; xmax = bbox.v1.x
+        ymin = bbox.v0.y; ymax = bbox.v1.y
         
         for y in range(ymin, ymax+1, 1):
             for x in range(xmin, xmax+1, 1):
