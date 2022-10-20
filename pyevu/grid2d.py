@@ -98,12 +98,18 @@ class Grid2D(Generic[T]):
             y=round(relPosition.y / self.cellHeight, max=max)
         )
 
-    def Grid2WorldPosition(self, gridCoord: Vector2) -> Vector2:
-        return Vector2(
-            x=self.origin.x + gridCoord.x * self.cellWidth,
-            y=self.origin.y + gridCoord.y * self.cellHeight
-        )
-    
+    def Grid2WorldPosition(self, gridCoord: Vector2, center: bool=False) -> Vector2:
+        if not center:
+            return Vector2(
+                x=self.origin.x + gridCoord.x * self.cellWidth,
+                y=self.origin.y + gridCoord.y * self.cellHeight
+            )
+        else:
+            return Vector2(
+                x=self.origin.x + (gridCoord.x + 0.5) * self.cellWidth,
+                y=self.origin.y + (gridCoord.y + 0.5) * self.cellHeight
+            )
+
     def GetWorldPositionIfValid(self, gridCoord: Vector2) -> Vector2:
         if self.gridBoundingBox.Contains(gridCoord):
             return self.Grid2WorldPosition(gridCoord)

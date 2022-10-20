@@ -107,12 +107,19 @@ class Grid3D(Generic[T]):
             z=round(relPosition.z / self.cellDepth, max=max)
         )
 
-    def Grid2WorldPosition(self, gridCoord: Vector3) -> Vector3:
-        return Vector3(
-            x=self.origin.x + gridCoord.x * self.cellWidth,
-            y=self.origin.y + gridCoord.y * self.cellHeight,
-            z=self.origin.z + gridCoord.z * self.cellDepth
-        )
+    def Grid2WorldPosition(self, gridCoord: Vector3, center: bool=False) -> Vector3:
+        if not center:
+            return Vector3(
+                x=self.origin.x + gridCoord.x * self.cellWidth,
+                y=self.origin.y + gridCoord.y * self.cellHeight,
+                z=self.origin.z + gridCoord.z * self.cellDepth
+            )
+        else:
+            return Vector3(
+                x=self.origin.x + (gridCoord.x + 0.5) * self.cellWidth,
+                y=self.origin.y + (gridCoord.y + 0.5) * self.cellHeight,
+                z=self.origin.z + (gridCoord.z + 0.5) * self.cellDepth
+            )
     
     def GetWorldPositionIfValid(self, gridCoord: Vector3) -> Vector3:
         if self.gridBoundingBox.Contains(gridCoord):
