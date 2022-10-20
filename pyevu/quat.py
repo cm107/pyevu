@@ -334,6 +334,10 @@ class Quat:
             ]
         )
         return Quat.from_rotation_matrix(m)
+    
+    @staticmethod
+    def Lerp(start: Quat, end: Quat, interpolationRatio: float) -> Quat:
+        return start + (end - start) * interpolationRatio
     #endregion
 
     #region euler angle related

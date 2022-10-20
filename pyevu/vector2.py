@@ -186,6 +186,10 @@ class Vector2:
             angle = math.copysign(angle, Vector2.Cross(a, b))
         return angle
 
+    @staticmethod
+    def Lerp(start: Vector2, end: Vector2, interpolationRatio: float) -> Vector2:
+        return start + (end - start) * interpolationRatio
+
     def ToList(self) -> List[float]:
         return [self.x, self.y]
     
