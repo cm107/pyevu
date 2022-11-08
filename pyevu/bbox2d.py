@@ -14,6 +14,18 @@ class BBox2D:
     def __repr__(self) -> str:
         return self.__str__()
     
+    def __add__(self, other) -> BBox2D:
+        if type(other) is Vector2:
+            return BBox2D(v0=self.v0 + other, v1=self.v1 + other)
+        else:
+            raise TypeError
+    
+    def __sub__(self, other) -> BBox2D:
+        if type(other) is Vector2:
+            return BBox2D(v0=self.v0 - other, v1=self.v1 - other)
+        else:
+            raise TypeError
+
     def Copy(self) -> BBox2D:
         return BBox2D(self.v0, self.v1)
 

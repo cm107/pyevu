@@ -14,6 +14,18 @@ class BBox3D:
     def __repr__(self) -> str:
         return self.__str__()
     
+    def __add__(self, other) -> BBox3D:
+        if type(other) is Vector3:
+            return BBox3D(v0=self.v0 + other, v1=self.v1 + other)
+        else:
+            raise TypeError
+    
+    def __sub__(self, other) -> BBox3D:
+        if type(other) is Vector3:
+            return BBox3D(v0=self.v0 - other, v1=self.v1 - other)
+        else:
+            raise TypeError
+
     def Copy(self) -> BBox3D:
         return BBox3D(self.v0, self.v1)
 
