@@ -154,3 +154,16 @@ class BBox3D:
             y=self.yInterval.Clamp(vec.y),
             z=self.zInterval.Clamp(vec.z)
         )
+
+    @staticmethod
+    def IoU(bbox0: BBox3D, bbox1: BBox3D) -> float:
+        """Intersection over Union (IoU)
+        Refer to https://pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
+        """
+        intersection = BBox3D.Intersection(bbox0, bbox1)
+        if intersection is None:
+            return 0
+        else:
+            overlap = intersection.volume
+            union = bbox0.volume + bbox1.volume - overlap
+            return overlap / union

@@ -135,3 +135,16 @@ class BBox2D:
             x=self.xInterval.Clamp(vec.x),
             y=self.yInterval.Clamp(vec.y)
         )
+    
+    @staticmethod
+    def IoU(bbox0: BBox2D, bbox1: BBox2D) -> float:
+        """Intersection over Union (IoU)
+        Refer to https://pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
+        """
+        intersection = BBox2D.Intersection(bbox0, bbox1)
+        if intersection is None:
+            return 0
+        else:
+            overlap = intersection.area
+            union = bbox0.area + bbox1.area - overlap
+            return overlap / union
