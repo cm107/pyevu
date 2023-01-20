@@ -1,6 +1,6 @@
 from __future__ import annotations
+import copy
 from .vector2 import Vector2
-from .vector3 import Vector3
 
 class Line2:
     def __init__(self, p0: Vector2, p1: Vector2):
@@ -44,6 +44,9 @@ class Line2:
 
     def __iter__(self):
         return iter([self.p0, self.p1])
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     @staticmethod
     def AreParallel(l0: Line2, l1: Line2, thresh: float=0.01) -> bool:
@@ -133,15 +136,26 @@ class Line2:
         if Vector2.Dot(v, proj_r1) < 0:
             a1 *= -1
         
-        if a0 < 0 and a1 > v.magnitude:
-            # l completely encompasses self
-            return True
-        else:
-            # l does not completely encompass self
-            if inclusive:
-                return 0 <= a0 <= v.magnitude or 0 <= a1 <= v.magnitude
+        if not inclusive:
+            if (
+                (a0 < 0 and a1 > v.magnitude)
+                or (a1 < 0 and a0 > v.magnitude)
+            ):
+                # l completely encompasses self
+                return True
             else:
+                # l does not completely encompass self
                 return 0 < a0 < v.magnitude or 0 < a1 < v.magnitude
+        else:
+            if (
+                (a0 <= 0 and a1 >= v.magnitude)
+                or (a1 <= 0 and a0 >= v.magnitude)
+            ):
+                # l completely encompasses self
+                return True
+            else:
+                # l does not completely encompass self
+                return 0 <= a0 <= v.magnitude or 0 <= a1 <= v.magnitude
 
     #region Tests
     @staticmethod

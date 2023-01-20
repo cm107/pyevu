@@ -1,4 +1,5 @@
 from __future__ import annotations
+import copy
 from .vector3 import Vector3
 
 class Line3:
@@ -43,6 +44,9 @@ class Line3:
 
     def __iter__(self):
         return iter([self.p0, self.p1])
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     @staticmethod
     def AreParallel(l0: Line3, l1: Line3, thresh: float=0.01) -> bool:
