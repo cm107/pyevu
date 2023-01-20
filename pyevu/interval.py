@@ -52,7 +52,7 @@ class Interval:
         )
     
     @classmethod
-    def Intersection(cls, a: Interval, b: Interval) -> Interval:
+    def Intersection(cls, a: Interval, b: Interval) -> Union[Interval, None]:
         if (Interval.Overlaps(a, b)):
             return Interval(min=max(a.min, b.min), max=min(a.max, b.max))
         else:

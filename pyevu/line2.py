@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TypeVar, Union
 import copy
 from .vector2 import Vector2
+from .interval import Interval
 
 class Line2:
     def __init__(self, p0: Vector2, p1: Vector2):
@@ -100,6 +101,43 @@ class Line2:
         xNum = det12 * (x3 - x4) - (x1 - x2) * det34
         yNum = det12 * (y3 - y4) - (y1 - y2) * det34
         return Vector2(xNum / denom, yNum / denom)
+
+    @staticmethod
+    def IntersectColinearSegments(
+        l0: L, l1: L, thresh: float=1e-5
+    ) -> Union[L, None]:
+        a = l0.p1 - l0.p0; b = l1.p1 - l1.p0
+        dot = Vector2.Dot(a.normalized, b.normalized)
+        isColinear = abs(abs(dot) - 1) < thresh
+        if not isColinear:
+            return None
+        
+        refPoint = l0.p0
+        direction = a.normalized
+        
+        def projectPoint(p: Vector2) -> float:
+            v = p - refPoint
+            d = v.magnitude
+            dot = Vector2.Dot(v.normalized, direction)
+            if dot < 0:
+                d *= -1
+            return d
+        
+        def projectLine(l: Line2) -> Interval:
+            val0 = projectPoint(l.p0)
+            val1 = projectPoint(l.p1)
+            if val0 < val1:
+                return Interval(val0, val1)
+        
+        i0 = projectLine(l0); i1 = projectLine(l1)
+        i = Interval.Intersection(i0, i1)
+        if i is None:
+            return None # Colinear, but no intersection
+        else:
+            return Line2(
+                p0=refPoint + i.min * direction,
+                p1=refPoint + i.max * direction
+            )
 
     def get_distance_to_point(self, p: Vector2, thresh: float=1e-5) -> float:
         """
@@ -363,6 +401,46 @@ class Line2:
         print("Slice Test Passed")
 
     @staticmethod
+    def intersect_colinear_segments_test():
+        L = Line2; P = Vector2
+
+        def samePoint(p0: P, p1: P, thresh: float=1e-5) -> bool:
+            sameX = abs(p1.x - p0.x) < thresh
+            sameY = abs(p1.y - p0.x) < thresh
+            return sameX and sameY
+        
+        def sameLine(l0: L, l1: L, thresh: float=1e-5) -> bool:
+            sameP0 = samePoint(l0.p0, l1.p0, thresh=thresh)
+            sameP1 = samePoint(l0.p1, l1.p1, thresh=thresh)
+            return sameP0 and sameP1
+
+        # Not Colinear
+        l0 = L(P(0,0), P(1,1)); l1 = L(P(0,1), P(1,0))
+        assert L.IntersectColinearSegments(l0, l1) is None
+
+        # Colinear, but not intersecting
+        l0 = L(P(0,0), P(1,1)); l1 = L(P(2,2), P(3,3))
+        assert L.IntersectColinearSegments(l0, l1) is None
+
+        # Colinear and intersecting
+        l0 = L(P(0,0), P(1,1)); l1 = L(P(0.5,0.5), P(3,3))
+        l = L(P(0.5,0.5), P(1,1))
+        assert sameLine(L.IntersectColinearSegments(l0, l1), l)
+
+        # Colinear and completely enclosed
+        l0 = L(P(0,0), P(1,1)); l1 = L(P(0.5,0.5), P(0.7,0.7))
+        l = L(P(0.5,0.5), P(0.7,0.7))
+        result = L.IntersectColinearSegments(l0, l1)
+        assert sameLine(result, l)
+
+        # Colinear but intersecting at just one point
+        l0 = L(P(0,0), P(1,1)); l1 = L(P(1,1), P(2,2))
+        l = L(P(1,1), P(1,1)) # This could be useful?
+        assert sameLine(L.IntersectColinearSegments(l0, l1), l)
+
+        print("Intersect Colinear Segments Test Passed")
+
+    @staticmethod
     def unit_test():
         Line2.equality_test()
         Line2.parallel_test()
@@ -370,6 +448,7 @@ class Line2:
         Line2.line_shortest_distance_test(verbose=False)
         Line2.intersects_test()
         Line2.slice_test()
+        Line2.intersect_colinear_segments_test()
     #endregion
 
 L = TypeVar('L', bound=Line2)
