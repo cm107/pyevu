@@ -198,8 +198,12 @@ class Line3:
         segment: bool=False, inclusive: bool=True
     ) -> bool:
         if type(other) is Vector3:
-            v = self.p1 - self.p0
             r = other - self.p0
+            if r.magnitude > 0:
+                v = self.p1 - self.p0
+            else:
+                r = other - self.p1
+                v = self.p0 - self.p1
             dot = Vector3.Dot(v.normalized, r.normalized)
             isColinear = abs(abs(dot) - 1) < thresh
             if not segment or not isColinear:
@@ -224,6 +228,28 @@ class Line3:
             )
         else:
             raise TypeError
+
+    def slice(self: L, line: L, thresh: float=1e-5, segment: bool=True) -> tuple[Union[L, None], Union[L, None]]:
+        if self == line:
+            return None, None
+        intersectionPoint = Line3.Intersection(self, line, thresh=thresh)
+        if intersectionPoint is None:
+            return None, None
+        intersectsSelf = self.intersects(intersectionPoint, thresh=thresh, segment=True, inclusive=True)
+        intersectsLine = line.intersects(intersectionPoint, thresh=thresh, segment=True, inclusive=True)
+        if segment:
+            if not intersectsSelf or not intersectsLine:
+                return None, None
+        else:
+            if not intersectsLine:
+                return None, None
+
+        if intersectionPoint == line.p0:
+            return None, line.copy()
+        elif intersectionPoint == line.p1:
+            return line.copy(), None
+        else:
+            return Line3(line.p0, intersectionPoint), Line3(intersectionPoint, line.p1)
 
     #region Tests
     @staticmethod
@@ -351,12 +377,53 @@ class Line3:
         print("Intersection Test Passed")
 
     @staticmethod
+    def slice_test():
+        L = Line3; P3 = Vector3
+        def P(x, y) -> Vector3:
+            return Vector3(x, y, 0)
+
+        # Intersection in middle (Segment)
+        l0 = L(P(0,1), P(1,0)); l1 = L(P(0,0), P(1,1)); p = P(0.5,0.5)
+        assert l0.slice(l1) == (L(l1.p0, p), L(p, l1.p1))
+
+        # Intersection at start (Segment)
+        l0 = L(P(-1,1), P(1,-1)); l1 = L(P(0,0), P(1,1))
+        assert l0.slice(l1) == (None, l1)
+
+        # Intersection at end (Segment)
+        l0 = L(P(0,2), P(2,0)); l1 = L(P(0,0), P(1,1))
+        assert l0.slice(l1) == (l1, None)
+
+        # No intersection (Segment)
+        l0 = L(P(0,5), P(5,0)); l1 = L(P(0,0), P(1,1))
+        assert l0.slice(l1) == (None, None)
+
+        # Intersection in middle (Line)
+        l0 = L(P(0,5), P(1,4)); l1 = L(P(0,0), P(5,5)); p = P(2.5,2.5)
+        assert l0.slice(l1, segment=False) == (L(l1.p0, p), L(p, l1.p1))
+
+        # Intersection at start (Line)
+        l0 = L(P(-5,5), P(-4,4)); l1 = L(P(0,0), P(5,5))
+        assert l0.slice(l1, segment=False) == (None, l1)
+
+        # Intersection at end (Line)
+        l0 = L(P(0,10), P(1,9)); l1 = L(P(0,0), P(5,5))
+        assert l0.slice(l1, segment=False) == (l1, None)
+
+        # No Intersection (Line)
+        l0 = L(P(0,11), P(1,10)); l1 = L(P(0,0), P(5,5))
+        assert l0.slice(l1, segment=False) == (None, None)
+
+        print("Slice Test Passed")
+
+    @staticmethod
     def unit_test():
         Line3.equality_test()
         Line3.parallel_test()
         Line3.distance_to_point_test()
         Line3.line_shortest_distance_test(verbose=False)
         Line3.intersects_test()
+        Line3.slice_test()
     #endregion
 
 L = TypeVar('L', bound=Line3)
