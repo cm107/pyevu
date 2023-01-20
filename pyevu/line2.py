@@ -26,21 +26,21 @@ class Line2:
             return self.__key() == other.__key()
         return NotImplemented
     
-    def __add__(self, other) -> Line2:
+    def __add__(self, other) -> L:
         if type(other) is Vector2:
-            return Line2(self.p0 + other, self.p1 + other)
+            return type(self)(self.p0 + other, self.p1 + other)
         else:
             raise TypeError
     
-    def __radd__(self, other) -> Line2:
+    def __radd__(self, other) -> L:
         if type(other) is Vector2:
-            return Line2(self.p0 + other, self.p1 + other)
+            return type(self)(self.p0 + other, self.p1 + other)
         else:
             raise TypeError
     
-    def __sub__(self, other) -> Line2:
+    def __sub__(self, other) -> L:
         if type(other) is Vector2:
-            return Line2(self.p0 - other, self.p1 - other)
+            return type(self)(self.p0 - other, self.p1 - other)
         else:
             raise TypeError
 
@@ -50,8 +50,8 @@ class Line2:
     def copy(self):
         return copy.deepcopy(self)
 
-    @staticmethod
-    def AreParallel(l0: Line2, l1: Line2, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreParallel(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         cos(angle) = Dot(a, b) / (a.mag * b.mag)
         Assuming a.mag == b.mag == 1
@@ -62,15 +62,15 @@ class Line2:
         dot = Vector2.Dot(m0, m1)
         return abs(abs(dot) - 1) < thresh
 
-    @staticmethod
-    def AreIntersecting(l0: Line2, l1: Line2, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreIntersecting(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         In 2D, lines intersect unless they are parallel.
         """
-        return not Line2.AreParallel(l0, l1, thresh=thresh)          
+        return not cls.AreParallel(l0, l1, thresh=thresh)          
 
-    @staticmethod
-    def ParallelShortestDistance(l0: Line2, l1: Line2, thresh: float=1e-5) -> float:
+    @classmethod
+    def ParallelShortestDistance(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> float:
         """
         If two lines are parallel, then the shortest distance between
         l0 and l1 is the same as the distance between an arbitrary point
@@ -78,16 +78,17 @@ class Line2:
         """
         return l0.get_distance_to_point(l1.p0, thresh=thresh)
 
-    @staticmethod
-    def ShortestDistance(l0: Line2, l1: Line2, thresh: float=1e-5) -> float:
-        if Line2.AreParallel(l0, l1, thresh=thresh):
-            return Line2.ParallelShortestDistance(l0, l1, thresh=thresh)
+    @classmethod
+    def ShortestDistance(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> float:
+        if cls.AreParallel(l0, l1, thresh=thresh):
+            return cls.ParallelShortestDistance(l0, l1, thresh=thresh)
         else:
             return 0 # The lines intersect
 
-    @staticmethod
+    @classmethod
     def Intersection(
-        l0: Line2, l1: Line2, thresh: float=1e-5
+        cls: type[L],
+        l0: L, l1: L, thresh: float=1e-5
     ) -> Union[Vector2, None]:
         """
         Refer to https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
@@ -102,8 +103,9 @@ class Line2:
         yNum = det12 * (y3 - y4) - (y1 - y2) * det34
         return Vector2(xNum / denom, yNum / denom)
 
-    @staticmethod
+    @classmethod
     def IntersectColinearSegments(
+        cls: type[L],
         l0: L, l1: L, thresh: float=1e-5
     ) -> Union[L, None]:
         a = l0.p1 - l0.p0; b = l1.p1 - l1.p0
@@ -123,7 +125,7 @@ class Line2:
                 d *= -1
             return d
         
-        def projectLine(l: Line2) -> Interval:
+        def projectLine(l: L) -> Interval:
             val0 = projectPoint(l.p0)
             val1 = projectPoint(l.p1)
             if val0 < val1:
@@ -134,7 +136,7 @@ class Line2:
         if i is None:
             return None # Colinear, but no intersection
         else:
-            return Line2(
+            return cls(
                 p0=refPoint + i.min * direction,
                 p1=refPoint + i.max * direction
             )
@@ -173,9 +175,9 @@ class Line2:
             else:
                 return 0 - thresh <= r.magnitude <= v.magnitude + thresh
         elif issubclass(type(other), Line2):
-            if not Line2.AreIntersecting(self, other, thresh=thresh):
+            if not type(self).AreIntersecting(self, other, thresh=thresh):
                 return False
-            intersectionPoint = Line2.Intersection(self, other, thresh=thresh)
+            intersectionPoint = type(self).Intersection(self, other, thresh=thresh)
             assert intersectionPoint is not None
             if not inclusive and intersectionPoint in list(self) + list(other):
                 return False
@@ -189,7 +191,7 @@ class Line2:
     def slice(self: L, line: L, thresh: float=1e-5, segment: bool=True) -> tuple[Union[L, None], Union[L, None]]:
         if self == line:
             return None, None
-        intersectionPoint = Line2.Intersection(self, line, thresh=thresh)
+        intersectionPoint = type(self).Intersection(self, line, thresh=thresh)
         if intersectionPoint is None:
             return None, None
         intersectsSelf = self.intersects(intersectionPoint, thresh=thresh, segment=True, inclusive=True)
@@ -206,7 +208,7 @@ class Line2:
         elif intersectionPoint == line.p1:
             return line.copy(), None
         else:
-            return Line2(line.p0, intersectionPoint), Line2(intersectionPoint, line.p1)
+            return type(self)(line.p0, intersectionPoint), type(self)(intersectionPoint, line.p1)
 
     def pointIsInFrontOfSegment(self, p: Vector2, inclusive: bool=True) -> bool:
         v = self.p1 - self.p0
@@ -221,7 +223,7 @@ class Line2:
         else:
             return 0 < a < v.magnitude
 
-    def lineIsInFrontOfSegment(self, l: Line2, inclusive: bool=True) -> bool:
+    def lineIsInFrontOfSegment(self, l: L, inclusive: bool=True) -> bool:
         v = self.p1 - self.p0
         
         r0 = l.p0 - self.p0

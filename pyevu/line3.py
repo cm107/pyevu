@@ -26,21 +26,21 @@ class Line3:
             return self.__key() == other.__key()
         return NotImplemented
     
-    def __add__(self, other) -> Line3:
+    def __add__(self, other) -> L:
         if type(other) is Vector3:
-            return Line3(self.p0 + other, self.p1 + other)
+            return type(self)(self.p0 + other, self.p1 + other)
         else:
             raise TypeError
     
-    def __radd__(self, other) -> Line3:
+    def __radd__(self, other) -> L:
         if type(other) is Vector3:
-            return Line3(self.p0 + other, self.p1 + other)
+            return type(self)(self.p0 + other, self.p1 + other)
         else:
             raise TypeError
     
-    def __sub__(self, other) -> Line3:
+    def __sub__(self, other) -> L:
         if type(other) is Vector3:
-            return Line3(self.p0 - other, self.p1 - other)
+            return type(self)(self.p0 - other, self.p1 - other)
         else:
             raise TypeError
 
@@ -50,8 +50,8 @@ class Line3:
     def copy(self):
         return copy.deepcopy(self)
 
-    @staticmethod
-    def AreParallel(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreParallel(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         cos(angle) = Dot(a, b) / (a.mag * b.mag)
         Assuming a.mag == b.mag == 1
@@ -62,8 +62,8 @@ class Line3:
         dot = Vector3.Dot(m0, m1)
         return abs(abs(dot) - 1) < thresh
 
-    @staticmethod
-    def AreCoplanar(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreCoplanar(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         Two lines are coplanar if any line that intersects both lines
         is orthogonal to the cross product of the two lines.
@@ -80,30 +80,30 @@ class Line3:
         m_cross = Vector3.Cross(m0, m1)
         return abs(Vector3.Dot(p_diff, m_cross)) < thresh
 
-    @staticmethod
-    def AreIntersecting(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreIntersecting(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         Two non-parallel lines intersect if and only if they are coplanar.
         Refer to https://math.stackexchange.com/a/697278
         """
-        if Line3.AreParallel(l0, l1, thresh=thresh):
+        if cls.AreParallel(l0, l1, thresh=thresh):
             return False
         else:
-            return Line3.AreCoplanar(l0, l1, thresh=thresh)            
+            return cls.AreCoplanar(l0, l1, thresh=thresh)            
 
-    @staticmethod
-    def AreSkew(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
+    @classmethod
+    def AreSkew(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
         Skew lines are a pair of lines that are non-intersecting,
         non-parallel, and non-coplanar.
         """
         return (
-           not Line3.AreParallel(l0, l1, thresh=thresh)
-           and not Line3.AreCoplanar(l0, l1, thresh=thresh) 
+           not cls.AreParallel(l0, l1, thresh=thresh)
+           and not cls.AreCoplanar(l0, l1, thresh=thresh) 
         )
 
-    @staticmethod
-    def SkewShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
+    @classmethod
+    def SkewShortestDistance(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> float:
         """
         Finds the shortest distance between two skew lines.
         A set of lines are skew if they do not intersect each
@@ -123,8 +123,8 @@ class Line3:
         m_cross = Vector3.Cross(m0, m1)
         return abs(Vector3.Dot(m_cross, p_diff) / m_cross.magnitude)
 
-    @staticmethod
-    def ParallelShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
+    @classmethod
+    def ParallelShortestDistance(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> float:
         """
         If two lines are parallel, then the shortest distance between
         l0 and l1 is the same as the distance between an arbitrary point
@@ -132,26 +132,27 @@ class Line3:
         """
         return l0.get_distance_to_point(l1.p0, thresh=thresh)
 
-    @staticmethod
-    def ShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
-        if Line3.AreParallel(l0, l1, thresh=thresh):
-            return Line3.ParallelShortestDistance(l0, l1, thresh=thresh)
+    @classmethod
+    def ShortestDistance(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> float:
+        if cls.AreParallel(l0, l1, thresh=thresh):
+            return cls.ParallelShortestDistance(l0, l1, thresh=thresh)
         else:
-            if Line3.AreCoplanar(l0, l1, thresh=thresh):
+            if cls.AreCoplanar(l0, l1, thresh=thresh):
                 return 0 # The lines intersect
             else:
                 # not parallel, not intersecting, not coplanar
                 # This is the definition of skew lines.
-                return Line3.SkewShortestDistance(l0, l1, thresh=thresh)
+                return cls.SkewShortestDistance(l0, l1, thresh=thresh)
 
-    @staticmethod
+    @classmethod
     def Intersection(
-        l0: Line3, l1: Line3, thresh: float=1e-5
+        cls: type[L],
+        l0: L, l1: L, thresh: float=1e-5
     ) -> Union[Vector3, None]:
         """
         Refer to https://math.stackexchange.com/questions/270767/find-intersection-of-two-3d-lines/271366
         """
-        if not Line3.AreIntersecting(l0, l1, thresh=thresh):
+        if not cls.AreIntersecting(l0, l1, thresh=thresh):
             return None
 
         p0: Vector3 = l0.p0; m0: Vector3 = l0.p1 - l0.p0
@@ -175,8 +176,9 @@ class Line3:
             M -= (f_cross_g.magnitude / f_cross_e.magnitude) * m0
         return M
 
-    @staticmethod
+    @classmethod
     def IntersectColinearSegments(
+        cls: type[L],
         l0: L, l1: L, thresh: float=1e-5
     ) -> Union[L, None]:
         a = l0.p1 - l0.p0; b = l1.p1 - l1.p0
@@ -196,7 +198,7 @@ class Line3:
                 d *= -1
             return d
         
-        def projectLine(l: Line3) -> Interval:
+        def projectLine(l: L) -> Interval:
             val0 = projectPoint(l.p0)
             val1 = projectPoint(l.p1)
             if val0 < val1:
@@ -207,7 +209,7 @@ class Line3:
         if i is None:
             return None # Colinear, but no intersection
         else:
-            return Line3(
+            return cls(
                 p0=refPoint + i.min * direction,
                 p1=refPoint + i.max * direction
             )
@@ -254,9 +256,9 @@ class Line3:
             else:
                 return 0 <= r.magnitude <= v.magnitude
         elif issubclass(type(other), Line3):
-            if not Line3.AreIntersecting(self, other, thresh=thresh):
+            if not type(self).AreIntersecting(self, other, thresh=thresh):
                 return False
-            intersectionPoint = Line3.Intersection(self, other, thresh=thresh)
+            intersectionPoint = type(self).Intersection(self, other, thresh=thresh)
             assert intersectionPoint is not None
             if not inclusive and intersectionPoint in list(self) + list(other):
                 return False
@@ -270,7 +272,7 @@ class Line3:
     def slice(self: L, line: L, thresh: float=1e-5, segment: bool=True) -> tuple[Union[L, None], Union[L, None]]:
         if self == line:
             return None, None
-        intersectionPoint = Line3.Intersection(self, line, thresh=thresh)
+        intersectionPoint = type(self).Intersection(self, line, thresh=thresh)
         if intersectionPoint is None:
             return None, None
         intersectsSelf = self.intersects(intersectionPoint, thresh=thresh, segment=True, inclusive=True)
@@ -287,7 +289,7 @@ class Line3:
         elif intersectionPoint == line.p1:
             return line.copy(), None
         else:
-            return Line3(line.p0, intersectionPoint), Line3(intersectionPoint, line.p1)
+            return type(self)(line.p0, intersectionPoint), type(self)(intersectionPoint, line.p1)
 
     #region Tests
     @staticmethod
