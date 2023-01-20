@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TypeVar, Union
 import copy
 from .vector2 import Vector2
 
@@ -49,7 +50,7 @@ class Line2:
         return copy.deepcopy(self)
 
     @staticmethod
-    def AreParallel(l0: Line2, l1: Line2, thresh: float=0.01) -> bool:
+    def AreParallel(l0: Line2, l1: Line2, thresh: float=1e-5) -> bool:
         """
         cos(angle) = Dot(a, b) / (a.mag * b.mag)
         Assuming a.mag == b.mag == 1
@@ -61,14 +62,14 @@ class Line2:
         return abs(abs(dot) - 1) < thresh
 
     @staticmethod
-    def AreIntersecting(l0: Line2, l1: Line2, thresh: float=0.01) -> bool:
+    def AreIntersecting(l0: Line2, l1: Line2, thresh: float=1e-5) -> bool:
         """
         In 2D, lines intersect unless they are parallel.
         """
         return not Line2.AreParallel(l0, l1, thresh=thresh)          
 
     @staticmethod
-    def ParallelShortestDistance(l0: Line2, l1: Line2, thresh: float=0.01) -> float:
+    def ParallelShortestDistance(l0: Line2, l1: Line2, thresh: float=1e-5) -> float:
         """
         If two lines are parallel, then the shortest distance between
         l0 and l1 is the same as the distance between an arbitrary point
@@ -77,14 +78,16 @@ class Line2:
         return l0.get_distance_to_point(l1.p0, thresh=thresh)
 
     @staticmethod
-    def ShortestDistance(l0: Line2, l1: Line2, thresh: float=0.01) -> float:
+    def ShortestDistance(l0: Line2, l1: Line2, thresh: float=1e-5) -> float:
         if Line2.AreParallel(l0, l1, thresh=thresh):
             return Line2.ParallelShortestDistance(l0, l1, thresh=thresh)
         else:
             return 0 # The lines intersect
 
     @staticmethod
-    def Intersection(l0: Line2, l1: Line2, thresh: float=0.01) -> Vector2:
+    def Intersection(
+        l0: Line2, l1: Line2, thresh: float=1e-5
+    ) -> Union[Vector2, None]:
         """
         Refer to https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
         """
@@ -98,7 +101,7 @@ class Line2:
         yNum = det12 * (y3 - y4) - (y1 - y2) * det34
         return Vector2(xNum / denom, yNum / denom)
 
-    def get_distance_to_point(self, p: Vector2, thresh: float=0.01) -> float:
+    def get_distance_to_point(self, p: Vector2, thresh: float=1e-5) -> float:
         """
         https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
         """
@@ -107,7 +110,40 @@ class Line2:
         pProj = Vector2.Project(pVec, direction)
         perp = pVec - pProj
         return perp.magnitude
-    
+
+    def intersects(
+        self, other,
+        thresh: float=1e-5,
+        segment: bool=False, inclusive: bool=True
+    ) -> bool:
+        if type(other) is Vector2:
+            v = self.p1 - self.p0
+            r = other - self.p0
+            dot = Vector2.Dot(v.normalized, r.normalized)
+            isColinear = abs(abs(dot) - 1) < thresh
+            if not segment or not isColinear:
+                return isColinear
+            # is a segment and is colinear
+            if dot < 0:
+                return False
+            if not inclusive:
+                return 0 < r.magnitude < v.magnitude
+            else:
+                return 0 <= r.magnitude <= v.magnitude
+        elif issubclass(type(other), Line2):
+            if not Line2.AreIntersecting(self, other, thresh=thresh):
+                return False
+            intersectionPoint = Line2.Intersection(self, other, thresh=thresh)
+            assert intersectionPoint is not None
+            if not inclusive and intersectionPoint in list(self) + list(other):
+                return False
+            return self.intersects(
+                intersectionPoint,
+                thresh=thresh, segment=segment, inclusive=inclusive
+            )
+        else:
+            raise TypeError
+
     def pointIsInFrontOfSegment(self, p: Vector2, inclusive: bool=True) -> bool:
         v = self.p1 - self.p0
         r = p - self.p0
@@ -243,9 +279,32 @@ class Line2:
         print("Line Classification/Distance/Intersection Test Passed")
 
     @staticmethod
+    def intersects_test():
+        L = Line2; P = Vector2
+        assert L(P(0,0), P(1,1)).intersects(P(0.5, 0.5))
+        assert not L(P(0,0), P(1,1)).intersects(P(0.4, 0.5))
+        assert L(P(0,0), P(1,1)).intersects(P(1.5, 1.5))
+        assert not L(P(0,0), P(1,1)).intersects(P(1.5, 1.5), segment=True)
+        assert L(P(0,0), P(1,1)).intersects(P(1, 1), segment=True, inclusive=True)
+        assert not L(P(0,0), P(1,1)).intersects(P(1, 1), segment=True, inclusive=False)
+        assert not L(P(0,0), P(1,1)).intersects(P(-1, -1), segment=True)
+
+        assert L(P(0,0), P(1,1)).intersects(L(P(0,1), P(1,0)))
+        assert L(P(0,0), P(1,1)).intersects(L(P(0,5), P(5,0)))
+        assert not L(P(0,0), P(1,1)).intersects(L(P(0,5), P(5,0)), segment=True)
+        assert L(P(0,0), P(1,1)).intersects(L(P(0.5,0.5), P(1,0)), segment=True, inclusive=True)
+        assert not L(P(0,0), P(1,1)).intersects(L(P(0.5,0.5), P(1,0)), segment=True, inclusive=False)
+        assert not L(P(0,0), P(1,1)).intersects(L(P(-0.5,-0.5), P(1,0)), segment=True)
+
+        print("Intersection Test Passed")
+
+    @staticmethod
     def unit_test():
         Line2.equality_test()
         Line2.parallel_test()
         Line2.distance_to_point_test()
         Line2.line_shortest_distance_test(verbose=False)
+        Line2.intersects_test()
     #endregion
+
+L = TypeVar('L', bound=Line2)

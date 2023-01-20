@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TypeVar, Union
 import copy
 from .vector3 import Vector3
 
@@ -49,7 +50,7 @@ class Line3:
         return copy.deepcopy(self)
 
     @staticmethod
-    def AreParallel(l0: Line3, l1: Line3, thresh: float=0.01) -> bool:
+    def AreParallel(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
         """
         cos(angle) = Dot(a, b) / (a.mag * b.mag)
         Assuming a.mag == b.mag == 1
@@ -61,7 +62,7 @@ class Line3:
         return abs(abs(dot) - 1) < thresh
 
     @staticmethod
-    def AreCoplanar(l0: Line3, l1: Line3, thresh: float=0.01) -> bool:
+    def AreCoplanar(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
         """
         Two lines are coplanar if any line that intersects both lines
         is orthogonal to the cross product of the two lines.
@@ -79,7 +80,7 @@ class Line3:
         return abs(Vector3.Dot(p_diff, m_cross)) < thresh
 
     @staticmethod
-    def AreIntersecting(l0: Line3, l1: Line3, thresh: float=0.01) -> bool:
+    def AreIntersecting(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
         """
         Two non-parallel lines intersect if and only if they are coplanar.
         Refer to https://math.stackexchange.com/a/697278
@@ -90,7 +91,7 @@ class Line3:
             return Line3.AreCoplanar(l0, l1, thresh=thresh)            
 
     @staticmethod
-    def AreSkew(l0: Line3, l1: Line3, thresh: float=0.01) -> bool:
+    def AreSkew(l0: Line3, l1: Line3, thresh: float=1e-5) -> bool:
         """
         Skew lines are a pair of lines that are non-intersecting,
         non-parallel, and non-coplanar.
@@ -101,7 +102,7 @@ class Line3:
         )
 
     @staticmethod
-    def SkewShortestDistance(l0: Line3, l1: Line3, thresh: float=0.01) -> float:
+    def SkewShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
         """
         Finds the shortest distance between two skew lines.
         A set of lines are skew if they do not intersect each
@@ -122,7 +123,7 @@ class Line3:
         return abs(Vector3.Dot(m_cross, p_diff) / m_cross.magnitude)
 
     @staticmethod
-    def ParallelShortestDistance(l0: Line3, l1: Line3, thresh: float=0.01) -> float:
+    def ParallelShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
         """
         If two lines are parallel, then the shortest distance between
         l0 and l1 is the same as the distance between an arbitrary point
@@ -131,7 +132,7 @@ class Line3:
         return l0.get_distance_to_point(l1.p0, thresh=thresh)
 
     @staticmethod
-    def ShortestDistance(l0: Line3, l1: Line3, thresh: float=0.01) -> float:
+    def ShortestDistance(l0: Line3, l1: Line3, thresh: float=1e-5) -> float:
         if Line3.AreParallel(l0, l1, thresh=thresh):
             return Line3.ParallelShortestDistance(l0, l1, thresh=thresh)
         else:
@@ -143,7 +144,9 @@ class Line3:
                 return Line3.SkewShortestDistance(l0, l1, thresh=thresh)
 
     @staticmethod
-    def Intersection(l0: Line3, l1: Line3, thresh: float=0.01) -> Vector3:
+    def Intersection(
+        l0: Line3, l1: Line3, thresh: float=1e-5
+    ) -> Union[Vector3, None]:
         """
         Refer to https://math.stackexchange.com/questions/270767/find-intersection-of-two-3d-lines/271366
         """
@@ -171,7 +174,7 @@ class Line3:
             M -= (f_cross_g.magnitude / f_cross_e.magnitude) * m0
         return M
 
-    def get_distance_to_point(self, p: Vector3, thresh: float=0.01) -> float:
+    def get_distance_to_point(self, p: Vector3, thresh: float=1e-5) -> float:
         """
         https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
         """
@@ -188,6 +191,39 @@ class Line3:
         pProj = Vector3.Project(pVec, direction)
         perp = pVec - pProj
         return perp.magnitude
+
+    def intersects(
+        self, other,
+        thresh: float=1e-5,
+        segment: bool=False, inclusive: bool=True
+    ) -> bool:
+        if type(other) is Vector3:
+            v = self.p1 - self.p0
+            r = other - self.p0
+            dot = Vector3.Dot(v.normalized, r.normalized)
+            isColinear = abs(abs(dot) - 1) < thresh
+            if not segment or not isColinear:
+                return isColinear
+            # is a segment and is colinear
+            if dot < 0:
+                return False
+            if not inclusive:
+                return 0 < r.magnitude < v.magnitude
+            else:
+                return 0 <= r.magnitude <= v.magnitude
+        elif issubclass(type(other), Line3):
+            if not Line3.AreIntersecting(self, other, thresh=thresh):
+                return False
+            intersectionPoint = Line3.Intersection(self, other, thresh=thresh)
+            assert intersectionPoint is not None
+            if not inclusive and intersectionPoint in list(self) + list(other):
+                return False
+            return self.intersects(
+                intersectionPoint,
+                thresh=thresh, segment=segment, inclusive=inclusive
+            )
+        else:
+            raise TypeError
 
     #region Tests
     @staticmethod
@@ -292,9 +328,35 @@ class Line3:
         print("Line Classification/Distance/Intersection Test Passed")
 
     @staticmethod
+    def intersects_test():
+        L = Line3; P3 = Vector3
+        def P(x, y) -> P3:
+            return P3(x, y, 0)
+        
+        assert L(P(0,0), P(1,1)).intersects(P(0.5, 0.5))
+        assert not L(P(0,0), P(1,1)).intersects(P(0.4, 0.5))
+        assert L(P(0,0), P(1,1)).intersects(P(1.5, 1.5))
+        assert not L(P(0,0), P(1,1)).intersects(P(1.5, 1.5), segment=True)
+        assert L(P(0,0), P(1,1)).intersects(P(1, 1), segment=True, inclusive=True)
+        assert not L(P(0,0), P(1,1)).intersects(P(1, 1), segment=True, inclusive=False)
+        assert not L(P(0,0), P(1,1)).intersects(P(-1, -1), segment=True)
+
+        assert L(P(0,0), P(1,1)).intersects(L(P(0,1), P(1,0)))
+        assert L(P(0,0), P(1,1)).intersects(L(P(0,5), P(5,0)))
+        assert not L(P(0,0), P(1,1)).intersects(L(P(0,5), P(5,0)), segment=True)
+        assert L(P(0,0), P(1,1)).intersects(L(P(0.5,0.5), P(1,0)), segment=True, inclusive=True)
+        assert not L(P(0,0), P(1,1)).intersects(L(P(0.5,0.5), P(1,0)), segment=True, inclusive=False)
+        assert not L(P(0,0), P(1,1)).intersects(L(P(-0.5,-0.5), P(1,0)), segment=True)
+
+        print("Intersection Test Passed")
+
+    @staticmethod
     def unit_test():
         Line3.equality_test()
         Line3.parallel_test()
         Line3.distance_to_point_test()
         Line3.line_shortest_distance_test(verbose=False)
+        Line3.intersects_test()
     #endregion
+
+L = TypeVar('L', bound=Line3)
