@@ -46,6 +46,7 @@ class BBox2D:
             v1=list(self.v1)
         )
     
+    @classmethod
     def from_dict(cls, item_dict: dict) -> BBox2D:
         return BBox2D(
             v0=item_dict['v0'],

@@ -43,6 +43,7 @@ class BBox3D:
             v1=list(self.v1)
         )
     
+    @classmethod
     def from_dict(cls, item_dict: dict) -> BBox3D:
         return BBox3D(
             v0=item_dict['v0'],
