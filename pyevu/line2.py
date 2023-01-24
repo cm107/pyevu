@@ -50,6 +50,10 @@ class Line2:
     def copy(self):
         return copy.deepcopy(self)
 
+    @property
+    def midpoint(self) -> Vector2:
+        return 0.5 * (self.p0 + self.p1)
+
     @classmethod
     def AreParallel(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
@@ -114,7 +118,7 @@ class Line2:
         if not isColinear:
             return None
         
-        refPoint = l0.p0
+        refPoint = l0.midpoint # TODO: This can probably be a problem sometimes.
         direction = a.normalized
         
         def projectPoint(p: Vector2) -> float:
@@ -130,6 +134,8 @@ class Line2:
             val1 = projectPoint(l.p1)
             if val0 < val1:
                 return Interval(val0, val1)
+            else:
+                return Interval(val1, val0)
         
         i0 = projectLine(l0); i1 = projectLine(l1)
         i = Interval.Intersection(i0, i1)
@@ -157,8 +163,8 @@ class Line2:
         segment: bool=False, inclusive: bool=True
     ) -> bool:
         if type(other) is Vector2:
-            r = other - self.p0
-            if r.magnitude > 0:
+            if (other - self.p0).magnitude > (other - self.p1).magnitude:
+                r = other - self.p0
                 v = self.p1 - self.p0
             else:
                 r = other - self.p1

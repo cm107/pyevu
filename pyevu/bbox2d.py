@@ -14,6 +14,17 @@ class BBox2D:
     def __repr__(self) -> str:
         return self.__str__()
     
+    def __key(self) -> tuple:
+        return tuple([self.__class__] + list(self.__dict__.values()))
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__key() == other.__key()
+        return NotImplemented
+
     def __add__(self, other) -> BBox2D:
         if type(other) is Vector2:
             return BBox2D(v0=self.v0 + other, v1=self.v1 + other)
@@ -28,6 +39,18 @@ class BBox2D:
 
     def Copy(self) -> BBox2D:
         return BBox2D(self.v0, self.v1)
+
+    def to_dict(self) -> dict:
+        return dict(
+            v0=list(self.v0),
+            v1=list(self.v1)
+        )
+    
+    def from_dict(cls, item_dict: dict) -> BBox2D:
+        return BBox2D(
+            v0=item_dict['v0'],
+            v1=item_dict['v1']
+        )
 
     @property
     def center(self) -> Vector2:
