@@ -237,3 +237,159 @@ class Vector2:
     @property
     def mat3(self) -> np.ndarray:
         return np.pad(self.mat2, [(0, 0), (0, 1)], mode='constant', constant_values=1)
+
+import numpy.typing as npt
+from typing import Annotated, Literal
+
+DType = TypeVar("DType", bound=np.generic)
+ArrayNx1 = Annotated[npt.NDArray[DType], Literal["N", 1]]
+ArrayNx2 = Annotated[npt.NDArray[DType], Literal["N", 2]]
+
+# TODO: This is still a work in progress.
+class Vector2Arr:
+    def __init__(self, x: ArrayNx1, y: ArrayNx1):
+        self.x = x
+        self.y = y
+    
+    def __str__(self) -> str:
+        return str(self.to_numpy())
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def to_numpy(self) -> ArrayNx2:
+        return np.vstack([self.x, self.y]).T
+
+    @classmethod
+    def from_numpy(cls, arr: ArrayNx2) -> Vector2Arr:
+        return Vector2Arr(x=arr[:,0], y=arr[:,1])
+
+    def to_vectors(self) -> list[Vector2]:
+        return [Vector2(float(x), float(y)) for x, y in zip(self.x.tolist(), self.y.tolist())]
+
+    @classmethod
+    def from_vectors(cls, vectors: list[Vector2]) -> Vector2Arr:
+        return Vector2Arr.from_numpy(np.array([list(v) for v in vectors]))
+
+    @classmethod
+    def Dot(cls, a: VectorVar, b: VectorVar) -> ArrayNx1:
+        # return a.x * b.x + a.y * b.y
+        if type(a) is Vector2Arr:
+            a = a.to_numpy()
+        if type(b) is Vector2Arr:
+            b = b.to_numpy()
+        return (a * b).sum(axis=1)
+
+    @classmethod
+    def Cross(cls, a: VectorVar, b: VectorVar) -> ArrayNx1:
+        # return a.x * b.y - a.y * b.x
+        if type(a) is Vector2Arr:
+            a = a.to_numpy()
+        if type(b) is Vector2Arr:
+            b = b.to_numpy()
+        return a[:,0] * b[:,1] - a[:,1] * b[:,0]
+
+    @property
+    def magnitude(self) -> ArrayNx1:
+        # return (self.x**2 + self.y**2)**0.5
+        return np.linalg.norm(self.to_numpy(), axis=1)
+    
+    @property
+    def sqrMagnitude(self) -> ArrayNx1:
+        # return self.x**2 + self.y**2
+        return (self.x * self.x) + (self.y * self.y)
+    
+    @property
+    def normalized(self) -> Vector2Arr:
+        # if self.magnitude > 0:
+        #     return self / self.magnitude
+        # else:
+        #     return Vector2.zero
+
+        np.seterr(invalid='ignore')
+
+        a = self.to_numpy()
+        mag = self.magnitude
+        magTile = np.tile(mag, (2,1)).T
+        result = np.true_divide(a, magTile)
+        result = np.nan_to_num(result)
+        return Vector2Arr.from_numpy(result)
+
+    @classmethod
+    def Project(cls, a: VectorVar, b: VectorVar) -> VectorVar:
+        # b_norm = b.normalized
+        # scalarProjection = Vector2.Dot(a, b_norm)
+        # return scalarProjection * b_norm
+
+        if type(a) is Vector2Arr:
+            aVec = a
+        else:
+            aVec = Vector2Arr.from_numpy(a)
+
+        if type(b) is Vector2Arr:
+            bVec = b
+        else:
+            bVec = Vector2Arr.from_numpy(b)
+        
+        b_norm = bVec.normalized
+        scalarProjection = Vector2Arr.Dot(aVec, b_norm)
+        scalarProjectionTile = np.tile(scalarProjection, (2,1)).T
+        result = scalarProjectionTile * b_norm.to_numpy()
+        return Vector2Arr.from_numpy(result)
+
+    @staticmethod
+    def debug():
+        aVecs = [
+            Vector2(0,0),
+            Vector2(1,2),
+            Vector2(3,4),
+            Vector2(5,6),
+            Vector2(7,8),
+            Vector2(9,10),
+        ]
+        bVecs = [
+            Vector2(0,0),
+            Vector2(11,12),
+            Vector2(13,14),
+            Vector2(15,16),
+            Vector2(17,18),
+            Vector2(19,20),
+        ][::-1]
+        aArr = Vector2Arr.from_vectors(aVecs)
+        bArr = Vector2Arr.from_vectors(bVecs)
+
+        assert (
+            aArr.to_numpy() == Vector2Arr.from_numpy(aArr.to_numpy()).to_numpy()
+        ).all()
+
+        def same_vector(v0: Vector2, v1: Vector2, thresh: float=1e-5) -> bool:
+            diff = v1 - v0
+            return abs(diff.x) < thresh and abs(diff.y) < thresh
+
+        dotArr = Vector2Arr.Dot(aArr, bArr)
+        crossArr = Vector2Arr.Cross(aArr, bArr)
+        aMag = aArr.magnitude; bMag = bArr.magnitude
+        aSqrMag = aArr.sqrMagnitude; bSqrMag = bArr.sqrMagnitude
+        aNorm = aArr.normalized; bNorm = bArr.normalized
+        projArr = Vector2Arr.Project(aArr, bArr)
+        for i, (a, b) in enumerate(zip(aVecs, bVecs)):
+            assert dotArr[i] == Vector2.Dot(a, b)
+            assert crossArr[i] == Vector2.Cross(a, b)
+            assert aMag[i] == a.magnitude and bMag[i] == b.magnitude
+            assert aSqrMag[i] == a.sqrMagnitude and bSqrMag[i] == b.sqrMagnitude
+            
+            an = aNorm.to_vectors()[i]; bn = bNorm.to_vectors()[i]
+            assert same_vector(an, a.normalized), f"{an=}, {a.normalized=}"
+            assert same_vector(bn, b.normalized), f"{bn=}, {b.normalized=}"
+
+            projVec = projArr.to_vectors()
+            assert same_vector(projVec[i], Vector2.Project(a, b)), f"{projVec[i]=}, {Vector2.Project(a, b)=}"
+
+        print(f"{Vector2Arr.Dot(aArr, bArr)=}")
+        print(f"{Vector2Arr.Cross(aArr, bArr)=}")
+        print(f"{aArr.magnitude=}")
+        print(f"{bArr.magnitude=}")
+        print(f"{aArr.normalized=}")
+        print(f"{projArr=}")
+
+VectorVar = Vector2Arr | ArrayNx2
