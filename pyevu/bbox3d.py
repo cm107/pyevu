@@ -46,8 +46,8 @@ class BBox3D:
     @classmethod
     def from_dict(cls, item_dict: dict) -> BBox3D:
         return BBox3D(
-            v0=item_dict['v0'],
-            v1=item_dict['v1']
+            v0=Vector3(*item_dict['v0']),
+            v1=Vector3(*item_dict['v1'])
         )
 
     def Copy(self) -> BBox3D:

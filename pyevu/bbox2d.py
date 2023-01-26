@@ -49,8 +49,8 @@ class BBox2D:
     @classmethod
     def from_dict(cls, item_dict: dict) -> BBox2D:
         return BBox2D(
-            v0=item_dict['v0'],
-            v1=item_dict['v1']
+            v0=Vector2(*item_dict['v0']),
+            v1=Vector2(*item_dict['v1'])
         )
 
     @property

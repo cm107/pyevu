@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TypeVar, Union
 import copy
+import numpy as np
 from .vector3 import Vector3
 from .interval import Interval
 
@@ -49,6 +50,16 @@ class Line3:
 
     def copy(self):
         return copy.deepcopy(self)
+
+    def to_numpy(self) -> np.ndarray:
+        return np.array(list(self.p0) + list(self.p1))
+
+    @classmethod
+    def from_numpy(self, arr: np.ndarray) -> Line3:
+        return Line3(
+            p0=Vector3.FromNumpy(arr[0:3]),
+            p1=Vector3.FromNumpy(arr[3:6])
+        )
 
     @property
     def midpoint(self) -> Vector3:
@@ -506,6 +517,12 @@ class Line3:
         print("Intersect Colinear Segments Test Passed")
 
     @staticmethod
+    def numpy_test():
+        l = Line3(Vector3(1,2,3), Vector3(4,5,6))
+        assert all(l.to_numpy() == Line3.from_numpy(l.to_numpy()).to_numpy())
+        print("Numpy test passed")
+
+    @staticmethod
     def unit_test():
         Line3.equality_test()
         Line3.parallel_test()
@@ -514,6 +531,7 @@ class Line3:
         Line3.intersects_test()
         Line3.slice_test()
         Line3.intersect_colinear_segments_test()
+        Line3.numpy_test()
     #endregion
 
 L = TypeVar('L', bound=Line3)

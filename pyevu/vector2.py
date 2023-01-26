@@ -239,14 +239,15 @@ class Vector2:
         return np.pad(self.mat2, [(0, 0), (0, 1)], mode='constant', constant_values=1)
 
 import numpy.typing as npt
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Generator
 
 DType = TypeVar("DType", bound=np.generic)
 ArrayNx1 = Annotated[npt.NDArray[DType], Literal["N", 1]]
 ArrayNx2 = Annotated[npt.NDArray[DType], Literal["N", 2]]
 
-# TODO: This is still a work in progress.
 class Vector2Arr:
+    dtype = np.float64
+
     def __init__(self, x: ArrayNx1, y: ArrayNx1):
         self.x = x
         self.y = y
@@ -257,8 +258,75 @@ class Vector2Arr:
     def __repr__(self) -> str:
         return self.__str__()
 
+    def __len__(self) -> int:
+        return self.x.shape[0]
+
+    def __neg__(self) -> Vector2Arr:
+        return type(self)(x=-self.x, y=-self.y)
+
+    def __add__(
+        self: VA, other: Union[float, int, V, VA]
+    ) -> VA:
+        if issubclass(type(other), Vector2Arr):
+            return type(self)(x=self.x + other.x, y=self.y + other.y)
+        elif issubclass(type(other), Vector2):
+            # return type(self)(x=self.x + other.x, y=self.y + other.y)
+            return type(self).from_numpy(
+                self.to_numpy() + other.ToNumpy()
+            )
+        elif type(other) in [float, int]:
+            return type(self)(x=self.x + other, y=self.y + other)
+        else:
+            raise TypeError(f"Can't add {type(other).__name__} to {type(self).__name__}")
+
+    def __radd__(self: VA, other: Union[float, int, V, VA]) -> VA:
+        return self.__add__(other)
+    
+    def __sub__(self: VA, other: Union[float, int, V, VA]) -> VA:
+        if (
+            type(other) in [float, int]
+            or issubclass(type(other), Vector2)
+            or issubclass(type(other), Vector2Arr)
+        ):
+            return self + (-other)
+        else:
+            raise TypeError(f"Can't subtract {type(other).__name__} from {type(self).__name__}")
+
+    def __rsub__(self: VA, other: Union[float, int, V, VA]) -> VA:
+        return self.__neg__().__add__(other)
+    
+    def __mul__(self: VA, other: Union[float, int]) -> VA:
+        if type(other) in [float, int]:
+            return type(self)(x=self.x*other, y=self.y*other)
+        else:
+            raise TypeError(f"Can't multiply {type(self).__name__} with {type(other).__name__}")
+    
+    def __rmul__(self: VA, other: Union[float, int]) -> VA:
+        return self.__mul__(other)
+
+    def __truediv__(self: VA, other: Union[float, int]) -> VA:
+        if type(other) in [float, int]:
+            return self.__mul__(1/other)
+        else:
+            raise TypeError(f"Can't divide {type(other).__name__} from {type(self).__name__}")
+
+    def __rtruediv__(self: VA, other: Union[float, int]) -> VA:
+        if type(other) in [float, int]:
+            return type(self)(x=1/self.x, y=1/self.y).__mul__(other)
+        else:
+            raise TypeError(f"Can't divide {type(self).__name__} from {type(other).__name__}")
+
+    def __getitem__(self, idx: int) -> Vector2:
+        if type(idx) is not int:
+            raise TypeError
+        return Vector2(float(self.x[idx].tolist()), float(self.y[idx].tolist()))
+
+    def __iter__(self) -> Generator[Vector2]:
+        for i in range(len(self)):
+            yield self[i]
+
     def to_numpy(self) -> ArrayNx2:
-        return np.vstack([self.x, self.y]).T
+        return np.vstack([self.x, self.y]).T.astype(type(self).dtype)
 
     @classmethod
     def from_numpy(cls, arr: ArrayNx2) -> Vector2Arr:
@@ -272,17 +340,38 @@ class Vector2Arr:
         return Vector2Arr.from_numpy(np.array([list(v) for v in vectors]))
 
     @classmethod
-    def Dot(cls, a: VectorVar, b: VectorVar) -> ArrayNx1:
+    def Dot(cls, a: Union[VectorArrVar, V], b: Union[VectorArrVar, V]) -> ArrayNx1:
         # return a.x * b.x + a.y * b.y
+        if issubclass(type(a), Vector2):
+            assert type(b) is Vector2Arr
+            a = np.tile(a.ToNumpy(), (len(b),1))
+            a = Vector2Arr.from_numpy(a)
+        if issubclass(type(b), Vector2):
+            assert type(a) is Vector2Arr
+            b = np.tile(b.ToNumpy(), (len(a),1))
+            b = Vector2Arr.from_numpy(b)
+
         if type(a) is Vector2Arr:
             a = a.to_numpy()
+
         if type(b) is Vector2Arr:
             b = b.to_numpy()
+
         return (a * b).sum(axis=1)
 
     @classmethod
-    def Cross(cls, a: VectorVar, b: VectorVar) -> ArrayNx1:
+    def Cross(cls, a: VectorArrVar, b: VectorArrVar) -> ArrayNx1:
         # return a.x * b.y - a.y * b.x
+
+        if issubclass(type(a), Vector2):
+            assert type(b) is Vector2Arr
+            a = np.tile(a.ToNumpy(), (len(b),1))
+            a = Vector2Arr.from_numpy(a)
+        if issubclass(type(b), Vector2):
+            assert type(a) is Vector2Arr
+            b = np.tile(b.ToNumpy(), (len(a),1))
+            b = Vector2Arr.from_numpy(b)
+
         if type(a) is Vector2Arr:
             a = a.to_numpy()
         if type(b) is Vector2Arr:
@@ -316,7 +405,7 @@ class Vector2Arr:
         return Vector2Arr.from_numpy(result)
 
     @classmethod
-    def Project(cls, a: VectorVar, b: VectorVar) -> VectorVar:
+    def Project(cls, a: VectorArrVar, b: VectorArrVar) -> VectorArrVar:
         # b_norm = b.normalized
         # scalarProjection = Vector2.Dot(a, b_norm)
         # return scalarProjection * b_norm
@@ -338,7 +427,7 @@ class Vector2Arr:
         return Vector2Arr.from_numpy(result)
 
     @staticmethod
-    def debug():
+    def unit_test():
         aVecs = [
             Vector2(0,0),
             Vector2(1,2),
@@ -385,11 +474,70 @@ class Vector2Arr:
             projVec = projArr.to_vectors()
             assert same_vector(projVec[i], Vector2.Project(a, b)), f"{projVec[i]=}, {Vector2.Project(a, b)=}"
 
-        print(f"{Vector2Arr.Dot(aArr, bArr)=}")
-        print(f"{Vector2Arr.Cross(aArr, bArr)=}")
-        print(f"{aArr.magnitude=}")
-        print(f"{bArr.magnitude=}")
-        print(f"{aArr.normalized=}")
-        print(f"{projArr=}")
+        negArr = -aArr
+        for i, a in enumerate(aVecs):
+            assert same_vector(negArr.to_vectors()[i], -a)
 
-VectorVar = Vector2Arr | ArrayNx2
+        addArr = aArr + 5
+        for i, a in enumerate(aVecs):
+            assert same_vector(addArr.to_vectors()[i], a + 5)
+        
+        addArr = aArr + Vector2(5,-12)
+        for i, a in enumerate(aVecs):
+            assert same_vector(addArr.to_vectors()[i], a + Vector2(5,-12)), \
+                f"{addArr.to_vectors()[i]=}, {a + Vector2(5,-12)=}"
+
+        addArr = aArr + bArr
+        for i, (a, b) in enumerate(zip(aVecs, bVecs)):
+            assert same_vector(addArr.to_vectors()[i], a + b)
+        
+        subArr = aArr - 5
+        for i, a in enumerate(aVecs):
+            assert same_vector(subArr.to_vectors()[i], a - 5)
+
+        subArr = aArr - Vector2(5,-12)
+        for i, a in enumerate(aVecs):
+            assert same_vector(subArr.to_vectors()[i], a - Vector2(5,-12)), \
+                f"{subArr.to_vectors()[i]=}, {a - Vector2(5,-12)=}"
+
+        subArr = aArr - bArr
+        for i, (a, b) in enumerate(zip(aVecs, bVecs)):
+            assert same_vector(subArr.to_vectors()[i], a - b)
+
+        mulArr = aArr * 5
+        for i, a in enumerate(aVecs):
+            assert same_vector(mulArr.to_vectors()[i], a * 5)
+        
+        divArr = aArr / 5
+        for i, a in enumerate(aVecs):
+            assert same_vector(divArr.to_vectors()[i], a / 5)
+
+        p1 = np.array(
+            [
+                [ 50,  20],
+                [100, 200],
+                [100, 200],
+                [-40,  20],
+                [100, 200]
+            ]
+        )
+        p0 = np.array(
+            [
+                [  100,   200],
+                [-5000, -5000],
+                [   50,    20],
+                [  100,   200],
+                [   50,    20]
+            ]
+        )
+        print(Vector2Arr.from_numpy(p1) - Vector2Arr.from_numpy(p0))
+        assert (
+            (
+                Vector2Arr.from_numpy(p1) - Vector2Arr.from_numpy(p0)
+            ).to_numpy() == (p1 - p0)
+        ).all()
+
+        print('Pass')
+
+VectorArrVar = Vector2Arr | ArrayNx2
+VA = TypeVar('VA', bound=Vector2Arr)
