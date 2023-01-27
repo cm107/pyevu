@@ -65,6 +65,10 @@ class Line2:
     def midpoint(self) -> Vector2:
         return 0.5 * (self.p0 + self.p1)
 
+    @property
+    def length(self) -> float:
+        return (self.p1 - self.p0).magnitude
+
     @classmethod
     def AreParallel(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
@@ -168,10 +172,15 @@ class Line2:
         perp = pVec - pProj
         return perp.magnitude
 
+    class IntersectionResult:
+        def __init__(self):
+            self.point: Vector2 = None
+
     def intersects(
         self, other,
         thresh: float=1e-5,
-        segment: bool=False, inclusive: bool=True
+        segment: bool=False, inclusive: bool=True,
+        outIntersection: IntersectionResult=None # Use this if you want to get the intersection point.
     ) -> bool:
         if type(other) is Vector2:
             if (other - self.p0).magnitude > (other - self.p1).magnitude:
@@ -183,14 +192,22 @@ class Line2:
             dot = Vector2.Dot(v.normalized, r.normalized)
             isColinear = abs(abs(dot) - 1) < thresh
             if not segment or not isColinear:
+                if outIntersection is not None and isColinear:
+                    outIntersection.point = other.Copy()
                 return isColinear
             # is a segment and is colinear
             if dot < 0:
                 return False
             if not inclusive:
-                return 0 < r.magnitude < v.magnitude
+                didIntersect = 0 < r.magnitude < v.magnitude
+                if outIntersection is not None and didIntersect:
+                    outIntersection.point = other.Copy()
+                return didIntersect
             else:
-                return 0 - thresh <= r.magnitude <= v.magnitude + thresh
+                didIntersect = 0 - thresh <= r.magnitude <= v.magnitude + thresh
+                if outIntersection is not None and didIntersect:
+                    outIntersection.point = other.Copy()
+                return didIntersect
         elif issubclass(type(other), Line2):
             if not type(self).AreIntersecting(self, other, thresh=thresh):
                 return False
@@ -198,10 +215,13 @@ class Line2:
             assert intersectionPoint is not None
             if not inclusive and intersectionPoint in list(self) + list(other):
                 return False
-            return self.intersects(
+            didIntersect = self.intersects(
                 intersectionPoint,
                 thresh=thresh, segment=segment, inclusive=inclusive
             )
+            if outIntersection is not None and didIntersect:
+                outIntersection.point = intersectionPoint.Copy()
+            return didIntersect
         else:
             raise TypeError
 
@@ -284,6 +304,15 @@ class Line2:
         assert L(P(0,0), P(1,1)) != L(P(0,0), P(2,1))
         print("Equality Test Passed")
     
+    @staticmethod
+    def length_test():
+        L = Line2; P = Vector2
+        assert L(P(0,0), P(1,0)).length == 1
+        assert L(P(0,0), P(0,5)).length == 5
+        assert L(P(0,-6), P(0,5)).length == 11
+        assert L(P(0,0), P(3,4)).length == 5
+        print("Length Test Passed")
+
     @staticmethod
     def parallel_test():
         L = Line2; P = Vector2
@@ -468,6 +497,7 @@ class Line2:
     @staticmethod
     def unit_test():
         Line2.equality_test()
+        Line2.length_test()
         Line2.parallel_test()
         Line2.distance_to_point_test()
         Line2.line_shortest_distance_test(verbose=False)
@@ -566,6 +596,10 @@ class Line2Arr:
     def midpoint(self) -> Vector2Arr:
         # return 0.5 * (self.p0 + self.p1)
         raise NotImplementedError
+
+    @property
+    def length(self) -> np.ndarray:
+        return (self.p1 - self.p0).magnitude
 
     @classmethod
     def AreParallel(cls: type[LA], l0: LA, l1: LA, thresh: float=1e-5) -> npt.NDArray[np.bool_]:
@@ -993,6 +1027,11 @@ class Line2Arr:
         for i, (l, p) in enumerate(zip(larr0.to_lines(), larr1.p0.to_vectors())):
             assert same_line(arr.to_lines()[i], l + p)
         
+        for larr in [larr0, larr1]:
+            length_arr = larr.length
+            for i, l in enumerate(larr.to_lines()):
+                assert length_arr[i] == l.length
+
         print("General Test Passed")
 
     @staticmethod

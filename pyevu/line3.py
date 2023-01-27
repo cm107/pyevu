@@ -65,6 +65,10 @@ class Line3:
     def midpoint(self) -> Vector3:
         return 0.5 * (self.p0 + self.p1)
 
+    @property
+    def length(self) -> float:
+        return (self.p1 - self.p0).magnitude
+
     @classmethod
     def AreParallel(cls: type[L], l0: L, l1: L, thresh: float=1e-5) -> bool:
         """
@@ -317,6 +321,18 @@ class Line3:
         print("Equality Test Passed")
     
     @staticmethod
+    def length_test():
+        L = Line3; P3 = Vector3
+        def P(x,y) -> P3:
+            return P3(x,y,0)
+
+        assert L(P(0,0), P(1,0)).length == 1
+        assert L(P(0,0), P(0,5)).length == 5
+        assert L(P(0,-6), P(0,5)).length == 11
+        assert L(P(0,0), P(3,4)).length == 5
+        print("Length Test Passed")
+
+    @staticmethod
     def parallel_test():
         L = Line3; P = Vector3
         def P2(x, y) -> Vector3:
@@ -525,6 +541,7 @@ class Line3:
     @staticmethod
     def unit_test():
         Line3.equality_test()
+        Line3.length_test()
         Line3.parallel_test()
         Line3.distance_to_point_test()
         Line3.line_shortest_distance_test(verbose=False)
