@@ -55,7 +55,7 @@ class Line2:
         return np.array(list(self.p0) + list(self.p1))
 
     @classmethod
-    def from_numpy(self, arr: np.ndarray) -> Line2:
+    def from_numpy(cls, arr: np.ndarray) -> Line2:
         return Line2(
             p0=Vector2.FromNumpy(arr[0:2]),
             p1=Vector2.FromNumpy(arr[2:4])

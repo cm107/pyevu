@@ -74,6 +74,10 @@ class Interval:
     def length(self) -> float:
         return self.max - self.min
     
+    @property
+    def center(self) -> float:
+        return (self.min + self.max) * 0.5
+
     @classmethod
     def Distance(cls, a: Interval, b: Interval) -> float:
         gap = Interval.Gap(a, b)

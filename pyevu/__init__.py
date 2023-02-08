@@ -7,6 +7,7 @@ from .vector3 import Vector3
 from .bbox3d import BBox3D
 from .line2 import Line2
 from .line3 import Line3
+from .quad2 import Quad2
 from .grid2d import Grid2D
 from .grid3d import Grid3D
 from .quat import Quat
