@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Union
+import numpy as np
 from .vector2 import Vector2
 from .interval import Interval
 
@@ -172,3 +173,8 @@ class BBox2D:
             overlap = intersection.area
             union = bbox0.area + bbox1.area - overlap
             return overlap / union
+
+    def crop_image(self, img: np.ndarray) -> np.ndarray:
+        xmin, ymin = [int(val) for val in list(self.v0)]
+        xmax, ymax = [int(val) for val in list(self.v1)]
+        return img[ymin:ymax, xmin:xmax, :]

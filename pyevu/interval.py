@@ -90,3 +90,16 @@ class Interval:
             return self.max
         else:
             return val
+    
+    @staticmethod
+    def IoU(i0: Interval, i1: Interval) -> float:
+        """Intersection over Union (IoU)
+        Same concept as BBox2D.IoU, but in 1D.
+        """
+        intersection = Interval.Intersection(i0, i1)
+        if intersection is None:
+            return 0
+        else:
+            overlap = intersection.length
+            union = i0.length + i1.length - overlap
+            return overlap / union
