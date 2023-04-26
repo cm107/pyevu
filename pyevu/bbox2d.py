@@ -156,7 +156,7 @@ class BBox2D:
         return self.xInterval.length * self.yInterval.length
 
     def Clamp(self, vec: Vector2) -> Vector2:
-        return Vector3(
+        return Vector2(
             x=self.xInterval.Clamp(vec.x),
             y=self.yInterval.Clamp(vec.y)
         )

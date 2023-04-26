@@ -61,10 +61,7 @@ class Quad2:
 
     @classmethod
     def from_numpy(cls, arr: np.ndarray) -> Q:
-        return cls(
-            p0=Vector2.FromNumpy(arr[0:2]),
-            p1=Vector2.FromNumpy(arr[2:4])
-        )
+        return cls.from_list(arr.tolist())
     
     @property
     def centroid(self) -> Vector2:
@@ -91,6 +88,18 @@ class Quad2:
             Vector2(bbox.v1.x, bbox.v0.y),
             Vector2(bbox.v0.x, bbox.v0.y)
         )
+
+    def to_points(self) -> list[Vector2]:
+        return [self.p0, self.p1, self.p2, self.p3]
+
+    @classmethod
+    def from_points(cls, points: list[Vector2]) -> Quad2:
+        if type(points) is list:
+            return Quad2(*points)
+        elif type(points) is tuple:
+            return Quad2(*list(points))
+        else:
+            raise TypeError
 
     def to_list(self) -> list[list[float]]:
         return [list(p) for p in self]
