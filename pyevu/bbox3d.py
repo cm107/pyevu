@@ -142,8 +142,13 @@ class BBox3D:
     def ContainsZ(self, val: float) -> bool:
         return self.zInterval.Contains(val)
     
-    def Contains(self, vertex: Vector3) -> bool:
-        return self.ContainsX(vertex.x) and self.ContainsY(vertex.y) and self.ContainsZ(vertex.z)
+    def Contains(self, obj: Union[Vector3, BBox3D]) -> bool:
+        if type(obj) is Vector3:
+            return self.ContainsX(obj.x) and self.ContainsY(obj.y) and self.ContainsZ(obj.z)
+        elif type(obj) is BBox3D:
+            return self.Contains(obj.v0) and self.Contains(obj.v1)
+        else:
+            raise TypeError
 
     @classmethod
     def Union(cls, bbox0: BBox3D, bbox1: BBox3D) -> BBox3D:

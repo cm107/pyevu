@@ -128,8 +128,13 @@ class BBox2D:
     def ContainsY(self, val: float) -> bool:
         return self.yInterval.Contains(val)
     
-    def Contains(self, vertex: Vector2) -> bool:
-        return self.ContainsX(vertex.x) and self.ContainsY(vertex.y)
+    def Contains(self, obj: Union[Vector2, BBox2D]) -> bool:
+        if type(obj) is Vector2:
+            return self.ContainsX(obj.x) and self.ContainsY(obj.y)
+        elif type(obj) is BBox2D:
+            return self.Contains(obj.v0) and self.Contains(obj.v1)
+        else:
+            raise TypeError
 
     @classmethod
     def Union(cls, bbox0: BBox2D, bbox1: BBox2D) -> BBox2D:
