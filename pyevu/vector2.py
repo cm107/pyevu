@@ -539,6 +539,5 @@ class Vector2Arr:
 
         print('Pass')
 
-from typing import Union
 Vector2Arr = Union[Vector2Arr, ArrayNx2]
 VA = TypeVar('VA', bound=Vector2Arr)
