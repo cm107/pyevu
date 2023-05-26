@@ -61,7 +61,7 @@ class Quad2:
 
     @classmethod
     def from_numpy(cls, arr: np.ndarray) -> Q:
-        return cls.from_list(arr.tolist())
+        return cls.from_list(arr.reshape(-1, 2).tolist())
     
     @property
     def centroid(self) -> Vector2:
