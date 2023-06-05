@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Union
+from typing import List, Union, overload
 import numpy as np
 from .vector2 import Vector2
 from .interval import Interval
@@ -160,12 +160,26 @@ class BBox2D:
     def area(self) -> float:
         return self.xInterval.length * self.yInterval.length
 
-    def Clamp(self, vec: Vector2) -> Vector2:
-        return Vector2(
-            x=self.xInterval.Clamp(vec.x),
-            y=self.yInterval.Clamp(vec.y)
-        )
-    
+    @overload
+    def Clamp(self, vec: Vector2) -> Vector2: ...
+
+    @overload
+    def Clamp(self, vec: BBox2D) -> BBox2D: ...
+
+    def Clamp(self, vec: Union[Vector2, BBox2D]) -> Union[Vector2, BBox2D]:
+        if type(vec) is Vector2:
+            return Vector2(
+                x=self.xInterval.Clamp(vec.x),
+                y=self.yInterval.Clamp(vec.y)
+            )
+        elif type(vec) is BBox2D:
+            return BBox2D(
+                v0=self.Clamp(vec.v0),
+                v1=self.Clamp(vec.v1)
+            )
+        else:
+            raise TypeError
+
     @staticmethod
     def IoU(bbox0: BBox2D, bbox1: BBox2D) -> float:
         """Intersection over Union (IoU)
