@@ -1,12 +1,20 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Union
 from .vector3 import Vector3
 from .interval import Interval
 
 class BBox3D:
-    def __init__(self, v0: Vector3, v1: Vector3):
-        self.v0 = v0
-        self.v1 = v1
+    def __init__(self, v0: Union[Vector3, tuple], v1: Union[Vector3, tuple]):
+        def convert(value: Union[Vector3, tuple]) -> Vector3:
+            if type(value) is Vector3:
+                return value
+            elif type(value) is tuple:
+                return Vector3(*value)
+            else:
+                raise TypeError(f"Invalid type: {type(value).__name__}")
+        
+        self.v0 = convert(v0)
+        self.v1 = convert(v1)
     
     def __str__(self) -> str:
         return f"BBox3D({self.v0} ~ {self.v1})"
@@ -177,12 +185,20 @@ class BBox3D:
     def volume(self) -> float:
         return self.xInterval.length * self.yInterval.length * self.zInterval.length
 
-    def Clamp(self, vec: Vector3) -> Vector3:
-        return Vector3(
-            x=self.xInterval.Clamp(vec.x),
-            y=self.yInterval.Clamp(vec.y),
-            z=self.zInterval.Clamp(vec.z)
-        )
+    def Clamp(self, vec: Union[Vector3, BBox3D]) -> Union[Vector3, BBox3D]:
+        if type(vec) is Vector3:
+            return Vector3(
+                x=self.xInterval.Clamp(vec.x),
+                y=self.yInterval.Clamp(vec.y),
+                z=self.zInterval.Clamp(vec.z)
+            )
+        elif type(vec) is BBox3D:
+            return BBox3D(
+                v0=self.Clamp(vec.v0),
+                v1=self.Clamp(vec.v1)
+            )
+        else:
+            raise TypeError
 
     @staticmethod
     def IoU(bbox0: BBox3D, bbox1: BBox3D) -> float:

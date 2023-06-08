@@ -5,9 +5,19 @@ from .vector2 import Vector2
 from .interval import Interval
 
 class BBox2D:
-    def __init__(self, v0: Vector2, v1: Vector2):
-        self.v0 = v0
-        self.v1 = v1
+    def __init__(
+        self, v0: Union[Vector2, tuple], v1: Union[Vector2, tuple]
+    ):
+        def convert(value: Union[Vector2, tuple]) -> Vector2:
+            if type(value) is Vector2:
+                return value
+            elif type(value) is tuple:
+                return Vector2(*value)
+            else:
+                raise TypeError(f"Invalid type: {type(value).__name__}")
+        
+        self.v0 = convert(v0)
+        self.v1 = convert(v1)
     
     def __str__(self) -> str:
         return f"BBox2D({self.v0} ~ {self.v1})"
