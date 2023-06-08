@@ -147,25 +147,26 @@ class BBox2D:
             raise TypeError
 
     @classmethod
-    def Union(cls, bbox0: BBox2D, bbox1: BBox2D) -> BBox2D:
+    def Union(cls, *args: BBox2D) -> BBox2D:
         workingValues = BBox2D.WorkingValues()
-        for point in [bbox0.v0, bbox0.v1, bbox1.v0, bbox1.v1]:
-            workingValues.Update(point)
+        for bbox in args:
+            workingValues.Update(bbox.v0)
+            workingValues.Update(bbox.v1)
         return workingValues.ToBBox2D()
     
     @classmethod
-    def Intersection(cls, bbox0: BBox2D, bbox1: BBox2D) -> BBox2D:
-        xIntersection = Interval.Intersection(bbox0.xInterval, bbox1.xInterval)
+    def Intersection(cls, *args: BBox2D) -> BBox2D:
+        xIntersection = Interval.Intersection(*[obj.xInterval for obj in args])
         if xIntersection is None:
             return None
-        yIntersection = Interval.Intersection(bbox0.yInterval, bbox1.yInterval)
+        yIntersection = Interval.Intersection(*[obj.yInterval for obj in args])
         if yIntersection is None:
             return None
         return BBox2D(
             v0=Vector2(x=xIntersection.min, y=yIntersection.min),
             v1=Vector2(x=xIntersection.max, y=yIntersection.max)
         )
-    
+
     @property
     def area(self) -> float:
         return self.xInterval.length * self.yInterval.length

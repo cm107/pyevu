@@ -12,6 +12,17 @@ class Interval:
     def __repr__(self) -> str:
         return self.__str__()
     
+    def __key(self: V) -> tuple:
+        return tuple([self.__class__] + list(self.__dict__.values()))
+
+    def __hash__(self: V):
+        return hash(self.__key())
+
+    def __eq__(self: V, other) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__key() == other.__key()
+        return NotImplemented
+
     def __lt__(self, other: Interval) -> bool:
         if type(other) is Interval:
             return self.max <= other.min
@@ -40,24 +51,32 @@ class Interval:
         return value >= self.min and value <= self.max
     
     @classmethod
-    def Overlaps(cls, a: Interval, b: Interval) -> bool:
-        return b.Contains(a.min) or b.Contains(a.max) \
-            or a.Contains(b.min) or a.Contains(b.max)
+    def Overlaps(cls, *args: Interval) -> bool:
+        def overlaps(a: Interval, b: Interval) -> bool:
+            return b.Contains(a.min) or b.Contains(a.max) \
+                or a.Contains(b.min) or a.Contains(b.max)
+
+        for i in range(len(args)):
+            for j in range(i+1, len(args)):
+                if not overlaps(args[i], args[j]):
+                    return False
+        return True
 
     @classmethod
-    def Union(cls, a: Interval, b: Interval) -> Interval:
-        return Interval(
-            min=a.min if a.min <= b.min else b.min,
-            max=a.max if a.max >= b.max else b.max
-        )
+    def Union(cls, *args: Interval) -> Interval:
+        vals = [obj.min for obj in args] + [obj.max for obj in args]
+        return Interval(min(vals), max(vals))
     
     @classmethod
-    def Intersection(cls, a: Interval, b: Interval) -> Union[Interval, None]:
-        if (Interval.Overlaps(a, b)):
-            return Interval(min=max(a.min, b.min), max=min(a.max, b.max))
+    def Intersection(cls, *args: Interval) -> Union[Interval, None]:
+        if (Interval.Overlaps(*args)):
+            return Interval(
+                min=max(*[obj.min for obj in args]),
+                max=min(*[obj.max for obj in args])
+            )
         else:
             return None
-    
+
     @classmethod
     def Gap(cls, a: Interval, b: Interval) -> Interval:
         if (not Interval.Overlaps(a, b)):
@@ -103,3 +122,58 @@ class Interval:
             overlap = intersection.length
             union = i0.length + i1.length - overlap
             return overlap / union
+
+    @staticmethod
+    def unit_test_comparison_ops():
+        assert Interval(-5,3) == Interval(-5,3)
+        assert Interval(-5,3) != Interval(4,5)
+        assert Interval(-5,3) < Interval(4,5)
+        assert Interval(-5,3) <= Interval(4,5)
+        assert Interval(4,5) > Interval(-5,3)
+        assert Interval(4,5) >= Interval(-5,3)
+        print("Passed Comparison Ops Unit Test")
+
+    @staticmethod
+    def unit_test_overlaps():
+        intervals = [ # Intersects at Interval(1.5,2)
+            Interval(-5,3),
+            Interval(-3,2.5),
+            Interval(1,2),
+            Interval(1.1,2.1),
+            Interval(1.5,3.5)
+        ]
+        assert Interval.Overlaps(*intervals)
+        assert not Interval.Overlaps(*(intervals + [Interval(-2,-1)]))
+        print("Passed Overlaps Unit Test")
+    
+    @staticmethod
+    def unit_test_union():
+        intervals = [ # Union at Interval(-5,3.5)
+            Interval(-5,3),
+            Interval(-3,2.5),
+            Interval(1,2),
+            Interval(1.1,2.1),
+            Interval(1.5,3.5)
+        ]
+        assert Interval.Union(*intervals) == Interval(-5,3.5)
+        print("Passed Union Unit Test")
+    
+    @staticmethod
+    def unit_test_intersection():
+        intervals = [ # Intersects at Interval(1.5,2)
+            Interval(-5,3),
+            Interval(-3,2.5),
+            Interval(1,2),
+            Interval(1.1,2.1),
+            Interval(1.5,3.5)
+        ]
+        assert Interval.Intersection(*intervals) == Interval(1.5,2)
+        print("Passed Intersection Unit Test")
+    
+    @staticmethod
+    def unit_test():
+        Interval.unit_test_comparison_ops()
+        Interval.unit_test_overlaps()
+        Interval.unit_test_union()
+        Interval.unit_test_intersection()
+        print("Passed All Unit Tests for Interval Class")

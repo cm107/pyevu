@@ -157,23 +157,24 @@ class BBox3D:
             return self.Contains(obj.v0) and self.Contains(obj.v1)
         else:
             raise TypeError
-
-    @classmethod
-    def Union(cls, bbox0: BBox3D, bbox1: BBox3D) -> BBox3D:
-        workingValues = BBox3D.WorkingValues()
-        for point in [bbox0.v0, bbox0.v1, bbox1.v0, bbox1.v1]:
-            workingValues.Update(point)
-        return workingValues.ToBBox3D()
     
     @classmethod
-    def Intersection(cls, bbox0: BBox3D, bbox1: BBox3D) -> BBox3D:
-        xIntersection = Interval.Intersection(bbox0.xInterval, bbox1.xInterval)
+    def Union(cls, *args: BBox3D) -> BBox3D:
+        workingValues = BBox3D.WorkingValues()
+        for bbox in args:
+            workingValues.Update(bbox.v0)
+            workingValues.Update(bbox.v1)
+        return workingValues.ToBBox3D()
+
+    @classmethod
+    def Intersection(cls, *args: BBox3D) -> BBox3D:
+        xIntersection = Interval.Intersection(*[obj.xInterval for obj in args])
         if xIntersection is None:
             return None
-        yIntersection = Interval.Intersection(bbox0.yInterval, bbox1.yInterval)
+        yIntersection = Interval.Intersection(*[obj.yInterval for obj in args])
         if yIntersection is None:
             return None
-        zIntersection = Interval.Intersection(bbox0.zInterval, bbox1.zInterval)
+        zIntersection = Interval.Intersection(*[obj.zInterval for obj in args])
         if zIntersection is None:
             return None
         return BBox3D(
