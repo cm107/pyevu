@@ -208,3 +208,6 @@ class BBox2D:
         xmin, ymin = [int(val) for val in list(self.v0)]
         xmax, ymax = [int(val) for val in list(self.v1)]
         return img[ymin:ymax, xmin:xmax, :]
+
+    def flatten(self) -> tuple[float, float, float, float]:
+        return tuple(list(self.v0) + list(self.v1))
