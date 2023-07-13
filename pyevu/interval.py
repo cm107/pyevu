@@ -123,6 +123,25 @@ class Interval:
             union = i0.length + i1.length - overlap
             return overlap / union
 
+    @classmethod
+    def split_at_intersection(cls, i0: Interval, i1: Interval) -> list[Interval]:
+        intersection = cls.Intersection(i0, i1)
+        if intersection is None or intersection.length == 0:
+            # 2
+            return [i0, i1]
+        elif i0 == i1:
+            # 1
+            return [i0]
+        else:
+            # 3
+            minVal = min(i0.min, i1.min)
+            maxVal = max(i0.max, i1.max)
+            return [
+                cls(minVal, intersection.min),
+                intersection,
+                cls(intersection.max, maxVal)
+            ]
+
     @staticmethod
     def unit_test_comparison_ops():
         assert Interval(-5,3) == Interval(-5,3)
@@ -171,9 +190,32 @@ class Interval:
         print("Passed Intersection Unit Test")
     
     @staticmethod
+    def unit_test_split_at_intersection():
+        i0 = Interval(0,1); i1 = Interval(0.5,1.5)
+        expectedResult = [
+            Interval(0,0.5), Interval(0.5,1), Interval(1,1.5)
+        ]
+        assert Interval.split_at_intersection(i0,i1) == expectedResult
+        assert Interval.split_at_intersection(i1,i0) == expectedResult
+        assert Interval.split_at_intersection(i0,i0) == [i0]
+        assert Interval.split_at_intersection(i1,i1) == [i1]
+
+        i2 = Interval(10,11)
+        assert Interval.split_at_intersection(i0,i2) == [i0,i2]
+        assert Interval.split_at_intersection(i2,i0) == [i2,i0]
+        assert Interval.split_at_intersection(i1,i2) == [i1,i2]
+        assert Interval.split_at_intersection(i2,i1) == [i2,i1]
+
+        i3 = Interval(1,2)
+        assert Interval.split_at_intersection(i0,i3) == [i0,i3]
+        assert Interval.split_at_intersection(i3,i0) == [i3,i0]
+        print("Passed Split At Intersection Test")
+
+    @staticmethod
     def unit_test():
         Interval.unit_test_comparison_ops()
         Interval.unit_test_overlaps()
         Interval.unit_test_union()
         Interval.unit_test_intersection()
+        Interval.unit_test_split_at_intersection()
         print("Passed All Unit Tests for Interval Class")
