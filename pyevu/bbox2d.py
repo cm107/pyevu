@@ -202,6 +202,8 @@ class BBox2D:
         else:
             overlap = intersection.area
             union = bbox0.area + bbox1.area - overlap
+            if union == 0:
+                return 0
             return overlap / union
 
     def crop_image(self, img: np.ndarray) -> np.ndarray:

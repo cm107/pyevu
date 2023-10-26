@@ -212,4 +212,6 @@ class BBox3D:
         else:
             overlap = intersection.volume
             union = bbox0.volume + bbox1.volume - overlap
+            if union == 0:
+                return 0
             return overlap / union
