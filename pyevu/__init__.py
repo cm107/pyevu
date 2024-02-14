@@ -1,4 +1,4 @@
-__version__ = '0.1'
+__version__ = '0.1.0'
 
 from .interval import Interval
 from .vector2 import Vector2
